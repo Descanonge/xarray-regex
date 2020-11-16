@@ -25,6 +25,7 @@ class Matcher():
         self.elt = None
         self.custom = False
         self.rgx = None
+        self.discard = False
 
         self.group = m.group()
 
@@ -86,6 +87,6 @@ class Matcher():
 
     def __repr__(self):
         s = '{0}:{1}, idx={2}'.format(self.coord, self.elt, self.idx)
-        if self.dummy:
-            s += ', dummy'
+        if self.discard:
+            s += ', discard'
         return s
