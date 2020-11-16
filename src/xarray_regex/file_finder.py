@@ -40,7 +40,7 @@ class FileFinder():
     def set_pregex(self, pregex: str, **replacements: str):
         pregex = pregex.strip()
         for k, z in replacements.items():
-            pregex.replace("%({:s})".format(k), z)
+            pregex = pregex.replace("%({:s})".format(k), z)
         self.pregex = pregex
 
     def create_regex(self):
