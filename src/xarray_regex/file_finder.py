@@ -4,6 +4,8 @@ import os
 import logging
 import re
 
+from typing import List, Union
+
 from xarray_regex.matcher import Matcher
 
 log = logging.getLogger(__name__)
@@ -14,8 +16,14 @@ class FileFinder():
     MAX_DEPTH_SCAN = 3
     """Limit descending into lower directories when finding files."""
 
-    def __init__(self, root: str, pregex: str, **replacements: str):
+    def __init__(self, root: Union[str, List[str]], pregex: str, **replacements: str):
+
+        if isinstance(root, (list, tuple)):
+            root = os.path.join(*root)
+        if not os.path.isdir(root):
+            raise ValueError(f"'{root}' directory does not exist.")
         self.root = root
+
         self.pregex = ''
         self.regex = ''
         self.matchers = []
