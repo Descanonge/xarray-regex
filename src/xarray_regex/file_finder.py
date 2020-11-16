@@ -111,6 +111,8 @@ class FileFinder():
         matches = {}
         for i in range(self.n_matchers):
             matcher = self.matchers[i]
+            if matcher.discard:
+                continue
             matches[matcher.elt] = {
                 'match': m.group(i+1),
                 'start': m.start(i+1),
