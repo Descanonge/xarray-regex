@@ -102,7 +102,7 @@ class FileFinder():
             files = [os.path.join(self.root, f) for f in files]
         return files
 
-    def find_matches(self, filename):
+    def get_matches(self, filename):
         m = self.pattern.match(filename)
         if m is None:
             raise ValueError("Filename did not match pattern.")
