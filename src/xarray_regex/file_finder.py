@@ -119,10 +119,10 @@ class FileFinder():
             }
         return matches
 
-    def get_func_process_filename(self, func, relative=True):
+    def get_func_process_filename(self, func, relative=True, *args, **kwargs):
         def f(ds):
             filename = ds.encoding['source']
             if relative:
                 filename = os.path.relpath(filename, self.root)
-            return func(ds, filename, self)
+            return func(ds, filename, self, *args, **kwargs)
         return f
