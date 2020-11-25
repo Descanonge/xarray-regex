@@ -55,8 +55,8 @@ class FileFinder():
 
     def scan_pregex(self, pregex: str):
         """Scan pregex for matchers."""
-        regex = (r"%\((?:(?P<name>[a-zA-Z]*):)??"
-                 r"(?P<elt>[a-zA-Z]*)"
+        regex = (r"%\((?:(?P<group>[a-zA-Z]*):)??"
+                 r"(?P<name>[a-zA-Z]*)"
                  r"(?P<cus>:custom=)?(?(cus)(?P<cus_rgx>[^:]*):)"
                  r"(?P<discard>(?(cus)|:)discard)?\)")
         m = re.finditer(regex, pregex)
@@ -116,7 +116,7 @@ class FileFinder():
             matcher = self.matchers[i]
             if matcher.discard:
                 continue
-            matches[matcher.elt] = {
+            matches[matcher.name] = {
                 'match': m.group(i+1),
                 'start': m.start(i+1),
                 'end': m.end(i+1),
