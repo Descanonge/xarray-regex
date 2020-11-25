@@ -28,9 +28,15 @@ class Matcher():
         self.rgx = None
         self.discard = False
 
-        self.match = m.group()
+        self.match = m.group()[2:-1]  # slicing removes %()
 
         self.set_regex(m)
+
+    def __repr__(self):
+        return '\n'.join([super().__repr__(), self.__str__()])
+
+    def __str__(self):
+        return '{}: {}'.format(self.idx, self.match)
 
     def set_regex(self, m: re.match):
         group = m.group('group')
@@ -82,9 +88,3 @@ class Matcher():
         from `NAME_RGX`. '%%' is replaced by a single percentage character.
         """
         return self.process_regex(self.rgx)
-
-    def __repr__(self):
-        s = '{0}:{1}, idx={2}'.format(self.coord, self.name, self.idx)
-        if self.discard:
-            s += ', discard'
-        return s

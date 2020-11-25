@@ -38,6 +38,25 @@ class FileFinder():
     def n_matchers(self):
         return len(self.matchers)
 
+    def __repr__(self):
+        return '\n'.join([super().__repr__(), self.__str__()])
+
+    def __str__(self):
+        s = ["pre-regex: {}".format(self.pregex)]
+        if self.regex is not None:
+            s += ["regex: {}".format(self.regex)]
+        else:
+            s += ["regex not created"]
+        if self.fixed_matcher:
+            s += ["fixed matchers:"]
+            s += ["\t fixed #{} to {}".format(i, v)
+                  for i, v in self.fixed_matcher.items()]
+        if not self.scanned:
+            s += ["not scanned"]
+        else:
+            s += ["found {} files".format(len(self.files))]
+        return '\n'.join(s)
+
     def set_pregex(self, pregex: str, **replacements: str):
         pregex = pregex.strip()
         for k, z in replacements.items():
