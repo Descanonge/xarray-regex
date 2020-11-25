@@ -71,10 +71,10 @@ class FileFinder():
 
         segments = self.segments.copy()
         for idx, m in enumerate(self.matchers):
-            segments[2*idx+1] = m.get_regex()
+            segments[2*idx+1] = '({})'.format(m.get_regex())
 
         for idx, value in self.fixed_matcher.items():
-            segments[2*idx+1] = value
+            segments[2*idx+1] = '({})'.format(value)
 
         self.regex = ''.join(segments)
         self.pattern = re.compile(self.regex + "$")
