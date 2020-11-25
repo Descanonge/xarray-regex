@@ -26,6 +26,7 @@ class FileFinder():
 
         self.pregex = ''
         self.regex = None
+        self.pattern = None
         self.matchers = []
         self.segments = []
         self.fixed_matcher = dict()
