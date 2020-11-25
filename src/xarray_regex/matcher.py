@@ -20,7 +20,8 @@ class Matcher():
                 "char": r"\S*"}
     """Regex str for each type of element."""
 
-    def __init__(self, m: re.match):
+    def __init__(self, m: re.match, idx: int = 0):
+        self.idx = idx
         self.group = None
         self.name = None
         self.custom = False
@@ -81,9 +82,6 @@ class Matcher():
         from `NAME_RGX`. '%%' is replaced by a single percentage character.
         """
         return self.process_regex(self.rgx)
-
-    def replace_itself(self, regex: str) -> str:
-        return regex.replace(self.match, '({})'.format(self.get_regex()))
 
     def __repr__(self):
         s = '{0}:{1}, idx={2}'.format(self.coord, self.name, self.idx)

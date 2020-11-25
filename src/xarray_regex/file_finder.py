@@ -25,13 +25,14 @@ class FileFinder():
         self.root = root
 
         self.pregex = ''
-        self.regex = ''
+        self.regex = None
         self.matchers = []
+        self.segments = []
+        self.fixed_matcher = dict()
         self.files = []
         self.scanned = False
 
         self.set_pregex(pregex, **replacements)
-        self.create_regex()
 
     @property
     def n_matchers(self):
@@ -43,24 +44,35 @@ class FileFinder():
             pregex = pregex.replace("%({:s})".format(k), z)
         self.pregex = pregex
 
+    def fix_matcher(self, idx: int, value: str):
+        self.fixed_matcher[idx] = value
+
     def create_regex(self):
-        self.scan_pregex(self.pregex)
+        self.scan_pregex()
 
-        regex = self.pregex
+        segments = self.segments.copy()
         for idx, m in enumerate(self.matchers):
-            regex = m.replace_itself(regex)
+            segments[2*idx+1] = m.get_regex()
 
-        self.regex = regex
+        for idx, value in self.fixed_matcher.items():
+            segments[2*idx+1] = value
+
+        self.regex = ''.join(segments)
         self.pattern = re.compile(self.regex + "$")
 
-    def scan_pregex(self, pregex: str):
+    def scan_pregex(self):
         """Scan pregex for matchers."""
         regex = (r"%\((?:(?P<group>[a-zA-Z]*):)??"
                  r"(?P<name>[a-zA-Z]*)"
                  r"(?P<cus>:custom=)?(?(cus)(?P<cus_rgx>[^:]*):)"
                  r"(?P<discard>(?(cus)|:)discard)?\)")
-        m = re.finditer(regex, pregex)
-        self.matchers = [Matcher(mi) for mi in m]
+        splits = [0]
+        self.matchers = []
+        for i, m in enumerate(re.finditer(regex, self.pregex)):
+            self.matchers.append(Matcher(m, i))
+            splits += [m.start(), m.end()]
+        self.segments = [self.pregex[i:j]
+                         for i, j in zip(splits, splits[1:]+[None])]
 
     def find_files(self):
         """Find files to scan.
@@ -75,6 +87,8 @@ class FileFinder():
         :raises AttributeError: If no regex is set.
         :raises IndexError: If no files are found.
         """
+        if self.regex is None:
+            self.create_regex()
         if self.regex == '':
             raise AttributeError("Finder is missing a regex.")
 
