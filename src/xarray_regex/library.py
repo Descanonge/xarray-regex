@@ -1,21 +1,30 @@
 """Functions to retrieve values from filename."""
 
+from typing import Dict
+
 from datetime import datetime, timedelta
 
 
-def get_date(matches, default_date=None) -> float:
+def get_date(matches: Dict, default_date: Dict = None) -> datetime:
     """Retrieve date from matched elements.
 
     If any element is not found in the filename, it will be replaced by the
     element in the default date. If no match is found, None is returned.
 
-    The date is converted to CoordScan units, or if not specified its parent
-    Coord units.
+    Supports matches with names from `Matcher.NAME_RGX`.
 
-    :param default_date: Default date element. Defaults to 1970-01-01 12:00:00
+    Parameters
+    ----------
+    matches: dict
+        Matches from a filename, returned by `FileFinder.get_matches`
+    default_date: dict, optional
+        Default date. Dictionnary with keys: year, month, day, hour, minute,
+        and second. Defaults to 1970-01-01 00:00:00
+
+    :param default_date: Default date element. Defaults to 1970-01-01 00:00:00
     """
     date = {"year": 1970, "month": 1, "day": 1,
-            "hour": 12, "minute": 0, "second": 0}
+            "hour": 00, "minute": 0, "second": 0}
 
     if default_date is None:
         default_date = {}
@@ -75,7 +84,7 @@ def get_date(matches, default_date=None) -> float:
     return datetime(**date)
 
 
-def _find_month_number(name: str):
+def _find_month_number(name: str) -> int:
     """Find a month number from its name.
 
     Name can be the full name (January) or its three letter abbreviation (jan).

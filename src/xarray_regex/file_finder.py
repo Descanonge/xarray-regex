@@ -4,7 +4,7 @@ import os
 import logging
 import re
 
-from typing import List, Union
+from typing import Callable, Dict, List
 
 from xarray_regex.matcher import Matcher
 
@@ -12,12 +12,53 @@ log = logging.getLogger(__name__)
 
 
 class FileFinder():
+    """Find files using a regular expression.
+
+    Provides abilities to 'fix' some part of the regular expression,
+    to retrieve values from matches in the expression, and to
+    create an advanced pre-processing function for `xarray.open_mfdataset`.
+
+    Parameters
+    ----------
+    root : str
+        The root directory of a filetree where all files can be found.
+    pregex: str
+        The pre-regex. A regular expression with added 'Matchers'.
+        Only the matchers vary from file to file. See documentation
+        for details.
+    replacements : str, optional
+        Matchers to replace by a string:
+        `'matcher name' = 'replacement string'`.
+
+    Attributes
+    ----------
+    root: str
+        The root directory of the finder.
+    pregex: str
+        Pre-regex.
+    regex: str
+        Regex obtained from the pre-regex. Is None before being created.
+    pattern: re.pattern
+        Compiled pattern obtained from the regex.
+    matchers: list of Matchers
+        List of matchers for this finder, in order.
+    segments: list of str
+        Segments of the pre-regex. Used to replace specific matchers.
+        ['text before matcher 1', 'matcher 1',
+         'text before matcher 2, 'matcher 2', ...]
+    fixed_matcher: dict
+        Dictionnary of matchers with a set value.
+        {'matcher index': 'replacement string'}
+    files: list of str
+        List of scanned files.
+    scanned: bool
+        If the finder has scanned files.
+    """
 
     MAX_DEPTH_SCAN = 3
-    """Limit descending into lower directories when finding files."""
+    """Maximum authorized depth when descending into filetree to scan files."""
 
-    def __init__(self, root: Union[str, List[str]], pregex: str, **replacements: str):
-
+    def __init__(self, root: str, pregex: str, **replacements: str):
         if isinstance(root, (list, tuple)):
             root = os.path.join(*root)
         if not os.path.isdir(root):
@@ -36,7 +77,8 @@ class FileFinder():
         self.set_pregex(pregex, **replacements)
 
     @property
-    def n_matchers(self):
+    def n_matchers(self) -> int:
+        """Number of matchers in pre-regex."""
         return len(self.matchers)
 
     def __repr__(self):
@@ -58,16 +100,134 @@ class FileFinder():
             s += ["found {} files".format(len(self.files))]
         return '\n'.join(s)
 
+    def get_files(self, relative: bool = False) -> List[str]:
+        """Return files that matches the regex.
+
+        Lazily scan files: if files were already scanned, just return
+        the stored list of files.
+
+        Parameters
+        ----------
+        relative : bool
+            If True, filenames are returned relative to the finder
+            root directory. Defaults to false.
+        """
+        if not self.scanned:
+            self.find_files()
+        files = self.files
+        if not relative:
+            files = [os.path.join(self.root, f) for f in files]
+        return files
+
+    def fix_matcher(self, idx: int, value: str):
+        """Fix a matcher to a string.
+
+        Parameters
+        ----------
+        idx : int
+            Matcher index. Starts at 0.
+        value : str
+            Will replace the match for all files.
+        """
+        self.fixed_matcher[idx] = value
+
+    def get_matches(self, filename: str) -> Dict[str, Dict]:
+        """Get matches for a given filename.
+
+        Apply regex to `filename` and return a dictionary of the results.
+
+        Returns
+        -------
+        dict of dict
+            {'matcher name': {'match': string matched,
+                              'start': start index in filename,
+                              'end': end index in filename,
+                              'matcher': Matcher object}}
+        """
+        m = self.pattern.match(filename)
+        if m is None:
+            raise ValueError("Filename did not match pattern.")
+        if len(m.groups()) != self.n_matchers:
+            raise IndexError("Not as many groups as matches.")
+        matches = {}
+        for i in range(self.n_matchers):
+            matcher = self.matchers[i]
+            if matcher.discard:
+                continue
+            matches[matcher.name] = {
+                'match': m.group(i+1),
+                'start': m.start(i+1),
+                'end': m.end(i+1),
+                'matcher': matcher
+            }
+        return matches
+
+    def get_func_process_filename(self, func: Callable, relative: bool = True,
+                                  *args, **kwargs) -> Callable:
+        """Get a function that can preprocess a dataset.
+
+        Written to be used as the 'process' argument of `xarray.open_mfdataset`.
+        Allows to use a function with additional arguments, that can retrieve
+        information from the filename.
+
+        Parameters
+        ----------
+        func: Callable
+            Input arguments: (`xarray.Dataset`, filename: `str`,
+                              `FileFinder`, *args, **kwargs)
+            Should return a Dataset.
+            Filename is retrieved from the dataset encoding attribute.
+        relative: If True, `filename` is taken relative to finder root.
+            This is necessary to match the filename against the finder regex.
+            Defaults to True.
+        args: optional
+            Passed to `func` when called.
+        kwargs: optional
+            Passed to `func` when called.
+
+        Returns
+        -------
+        Callable
+             Function with the signature of the 'process' argument of
+             `xarray.open_mfdataset`.
+
+        Examples
+        --------
+        This retrieve the date from the filename, and add a time dimensions
+        to the dataset with the corresponding value.
+        >>> from xarray_regex import library
+        ... def process(ds, filename, finder, default_date=None):
+        ...     matches = finder.get_matches(filename)
+        ...     date = library.get_date(matches, default_date=default_date)
+        ...     ds = ds.assign_coords(time=[date])
+        ...     return ds
+        ...
+        ... ds = xr.open_mfdataset(finder.get_files(),
+        ...                        preprocess=finder.get_func_process_filename(
+        ...     process, default_date={'hour': 12}))
+        """
+        def f(ds):
+            filename = ds.encoding['source']
+            if relative:
+                filename = os.path.relpath(filename, self.root)
+            return func(ds, filename, self, *args, **kwargs)
+        return f
+
     def set_pregex(self, pregex: str, **replacements: str):
+        """Set pre-regex.
+
+        Apply replacements.
+        """
         pregex = pregex.strip()
         for k, z in replacements.items():
             pregex = pregex.replace("%({:s})".format(k), z)
         self.pregex = pregex
 
-    def fix_matcher(self, idx: int, value: str):
-        self.fixed_matcher[idx] = value
-
     def create_regex(self):
+        """Create regex from pre-regex.
+
+        Lazily called when scanning files.
+        """
         self.scan_pregex()
 
         segments = self.segments.copy()
@@ -81,7 +241,11 @@ class FileFinder():
         self.pattern = re.compile(self.regex + "$")
 
     def scan_pregex(self):
-        """Scan pregex for matchers."""
+        """Scan pregex for matchers.
+
+        Add matchers objects to self.
+        Set segments attribute.
+        """
         regex = (r"%\((?:(?P<group>[a-zA-Z]*):)??"
                  r"(?P<name>[a-zA-Z]*)"
                  r"(?P<cus>:custom=)?(?(cus)(?P<cus_rgx>[^:]*):)"
@@ -99,13 +263,14 @@ class FileFinder():
 
         Uses os.walk. Limit search to `MAX_DEPTH_SCAN` levels of directories
         deep.
-
-        If `file_override` is set, bypass this search, just use it.
-
         Sort files alphabetically.
 
-        :raises AttributeError: If no regex is set.
-        :raises IndexError: If no files are found.
+        Raises
+        ------
+        AttributeError
+            If no regex is set.
+        IndexError
+            If no files are found in the filetree.
         """
         if self.regex is None:
             self.create_regex()
@@ -131,37 +296,3 @@ class FileFinder():
         self.scanned = True
         self.files = files_matched
 
-    def get_files(self, relative=False):
-        if not self.scanned:
-            self.find_files()
-        files = self.files
-        if not relative:
-            files = [os.path.join(self.root, f) for f in files]
-        return files
-
-    def get_matches(self, filename):
-        m = self.pattern.match(filename)
-        if m is None:
-            raise ValueError("Filename did not match pattern.")
-        if len(m.groups()) != self.n_matchers:
-            raise IndexError("Not as many groups as matches.")
-        matches = {}
-        for i in range(self.n_matchers):
-            matcher = self.matchers[i]
-            if matcher.discard:
-                continue
-            matches[matcher.name] = {
-                'match': m.group(i+1),
-                'start': m.start(i+1),
-                'end': m.end(i+1),
-                'matcher': matcher
-            }
-        return matches
-
-    def get_func_process_filename(self, func, relative=True, *args, **kwargs):
-        def f(ds):
-            filename = ds.encoding['source']
-            if relative:
-                filename = os.path.relpath(filename, self.root)
-            return func(ds, filename, self, *args, **kwargs)
-        return f

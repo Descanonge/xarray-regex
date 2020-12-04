@@ -4,6 +4,32 @@ import re
 
 
 class Matcher():
+    """Manage a matcher inside the pre-regex.
+
+    Parameters
+    ----------
+    m: re.match
+        Match object obtained to find matchers in the pre-regex.
+    idx: int
+        Index inside the pre-regex.
+
+    Attributes
+    ----------
+    idx: int
+        Index inside the pre-regex.
+    group: str
+        Group name.
+    name: str
+        Matcher name.
+    custom: bool
+        If there is a custom regex to use preferentially.
+    rgx: str
+        Regex.
+    discard: bool
+        If the matcher should not be used when retrieving values from matches.
+    match: str
+        The string that created the matcher `%(match)`.
+    """
 
     NAME_RGX = {"idx": r"\d+",
                 "Y": r"\d\d\d\d",
@@ -30,7 +56,7 @@ class Matcher():
 
         self.match = m.group()[2:-1]  # slicing removes %()
 
-        self.set_regex(m)
+        self.set_matcher(m)
 
     def __repr__(self):
         return '\n'.join([super().__repr__(), self.__str__()])
@@ -38,21 +64,26 @@ class Matcher():
     def __str__(self):
         return '{}: {}'.format(self.idx, self.match)
 
-    def set_regex(self, m: re.match):
+    def set_matcher(self, m: re.match):
+        """Find attributes from match.
+
+        Raises
+        ------
+        NameError
+            No name.
+        ValueError
+            Empty custom regex.
+        """
         group = m.group('group')
         name = m.group('name')
         custom = m.group('cus') is not None
         rgx = m.group('cus_rgx')
 
-        if rgx is not None:
-            if rgx == "":
-                raise ValueError("Custom regex cannot be empty.")
-            if name is None:
-                raise KeyError("Matcher must have either a name "
-                               "or a custom regex specified.")
-        else:
-            if name == "":
-                raise ValueError("Element cannot be empty.")
+        if name is None:
+            raise NameError("Matcher name cannot be empty.")
+        if custom and not rgx:
+            raise ValueError("Matcher custom regex cannot be empty.")
+
         self.group = group
         self.name = name
         self.custom = custom
@@ -62,29 +93,28 @@ class Matcher():
         else:
             self.rgx = self.NAME_RGX[name]
 
-    @classmethod
-    def process_regex(cls, rgx: str) -> str:
-        """Replace matchers by true regex.
+    def get_regex(self) -> str:
+        """Get matcher regex.
 
-        '%' followed by a single letter is replaced by the corresponding regex
-        from `NAME_RGX`. '%%' is replaced by a single percentage character.
+        Replace the matchers name by regex from `Matcher.NAME_RGX`.
+        If there is a custom regex, recursively replace '%' followed by a single
+        letter by the corresponding regex from `NAME_RGX`. '%%' is replaced by a
+        single percentage character.
+
+        Raises
+        ------
+        KeyError
+            Unknown replacement.
         """
         def replace(match):
             group = match.group(1)
             if group == '%':
                 return '%'
-            if group in cls.NAME_RGX:
-                replacement = cls.NAME_RGX[group]
+            if group in self.NAME_RGX:
+                replacement = self.NAME_RGX[group]
                 if '%' in replacement:
-                    return cls.process_regex(replacement)
+                    return self.get_regex(replacement)
                 return replacement
             raise KeyError("Unknown replacement '{}'.".format(match.group(0)))
-        return re.sub("%([a-zA-Z%])", replace, rgx)
 
-    def get_regex(self) -> str:
-        """Replace matchers by true regex.
-
-        '%' followed by a single letter is replaced by the corresponding regex
-        from `NAME_RGX`. '%%' is replaced by a single percentage character.
-        """
-        return self.process_regex(self.rgx)
+        return re.sub("%([a-zA-Z%])", replace, self.rgx)
