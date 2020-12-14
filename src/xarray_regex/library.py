@@ -20,8 +20,6 @@ def get_date(matches: Dict, default_date: Dict = None) -> datetime:
     default_date: dict, optional
         Default date. Dictionnary with keys: year, month, day, hour, minute,
         and second. Defaults to 1970-01-01 00:00:00
-
-    :param default_date: Default date element. Defaults to 1970-01-01 00:00:00
     """
     date = {"year": 1970, "month": 1, "day": 1,
             "hour": 00, "minute": 0, "second": 0}

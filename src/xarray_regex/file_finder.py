@@ -143,12 +143,23 @@ class FileFinder():
                               'start': start index in filename,
                               'end': end index in filename,
                               'matcher': Matcher object}}
+
+        Raises
+        ------
+        AttributeError: The regex is empty.
+        ValueError: The filename did not match the pattern.
+        IndexError: Not as many matches as matchers.
         """
+        if self.regex is None:
+            self.create_regex()
+        if self.regex == '':
+            raise AttributeError("Finder is missing a regex.")
+
         m = self.pattern.match(filename)
         if m is None:
             raise ValueError("Filename did not match pattern.")
         if len(m.groups()) != self.n_matchers:
-            raise IndexError("Not as many groups as matches.")
+            raise IndexError("Not as many matches as matchers.")
         matches = {}
         for i in range(self.n_matchers):
             matcher = self.matchers[i]
