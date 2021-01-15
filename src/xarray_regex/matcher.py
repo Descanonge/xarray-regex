@@ -41,6 +41,7 @@ class Matcher():
                 "S": r"\d\d",
                 "x": r"%Y%m%d",
                 "X": r"%H%M%S",
+                "F": r"%Y-%m-%d",
                 "B": r"[a-zA-Z]*",
                 "text": r"[a-zA-Z]*",
                 "char": r"\S*"}
