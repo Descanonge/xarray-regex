@@ -44,11 +44,11 @@ class FileFinder():
         List of matchers for this finder, in order.
     segments: list of str
         Segments of the pre-regex. Used to replace specific matchers.
-        ['text before matcher 1', 'matcher 1',
-         'text before matcher 2, 'matcher 2', ...]
+        `['text before matcher 1', 'matcher 1',
+        'text before matcher 2, 'matcher 2', ...]`
     fixed_matcher: dict
         Dictionnary of matchers with a set value.
-        {'matcher index': 'replacement string'}
+        'matcher index': 'replacement string'
     files: list of str
         List of scanned files.
     scanned: bool
@@ -56,7 +56,9 @@ class FileFinder():
     """
 
     MAX_DEPTH_SCAN = 3
-    """Maximum authorized depth when descending into filetree to scan files."""
+    """Maximum authorized depth when descending into filetree to scan files.
+    Class attribute.
+    """
 
     def __init__(self, root: str, pregex: str, **replacements: str):
         if isinstance(root, (list, tuple)):
@@ -131,10 +133,20 @@ class FileFinder():
         """
         self.fixed_matcher[idx] = value
 
-    def get_matches(self, filename: str) -> Dict[str, Dict]:
+    def get_matches(self, filename: str,
+                    relative: bool = True) -> Dict[str, Dict]:
         """Get matches for a given filename.
 
         Apply regex to `filename` and return a dictionary of the results.
+
+        Parameters
+        ----------
+        filename:
+            Filename to retrieve matches from.
+        relative:
+            Is true if the filename is relative to the finder root directory.
+            If false, the filename is made relative before being matched.
+            Default to true.
 
         Returns
         -------
@@ -154,6 +166,9 @@ class FileFinder():
             self.create_regex()
         if self.regex == '':
             raise AttributeError("Finder is missing a regex.")
+
+        if not relative:
+            filename = os.path.relpath(filename, self.root)
 
         m = self.pattern.match(filename)
         if m is None:
@@ -175,7 +190,7 @@ class FileFinder():
 
     def get_func_process_filename(self, func: Callable, relative: bool = True,
                                   *args, **kwargs) -> Callable:
-        """Get a function that can preprocess a dataset.
+        r"""Get a function that can preprocess a dataset.
 
         Written to be used as the 'process' argument of `xarray.open_mfdataset`.
         Allows to use a function with additional arguments, that can retrieve
@@ -184,8 +199,8 @@ class FileFinder():
         Parameters
         ----------
         func: Callable
-            Input arguments: (`xarray.Dataset`, filename: `str`,
-                              `FileFinder`, *args, **kwargs)
+            Input arguments (`xarray.Dataset`, filename: `str`,
+            `FileFinder`, \*args, \*\*kwargs)
             Should return a Dataset.
             Filename is retrieved from the dataset encoding attribute.
         relative: If True, `filename` is taken relative to finder root.
