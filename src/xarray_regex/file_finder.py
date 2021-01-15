@@ -203,7 +203,7 @@ class FileFinder():
             `FileFinder`, \*args, \*\*kwargs)
             Should return a Dataset.
             Filename is retrieved from the dataset encoding attribute.
-        relative: If True, `filename` is taken relative to finder root.
+        relative: If True, `filename` is made relative to finder root.
             This is necessary to match the filename against the finder regex.
             Defaults to True.
         args: optional

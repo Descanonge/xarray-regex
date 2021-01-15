@@ -31,7 +31,8 @@ setup(name='xarray-regex',
       keywords='xarray regex files',
       classifiers=[
           'Licence :: OSI Approved :: MIT License',
-          'Programming Language :: Python :: 3.7'
+          'Programming Language :: Python :: 3.7',
+          'Operating System :: OS Independent'
       ],
 
       url='https://github.com/Descanonge/xarray-regex',
