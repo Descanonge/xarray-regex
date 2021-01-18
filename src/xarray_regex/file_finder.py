@@ -4,7 +4,7 @@ import os
 import logging
 import re
 
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Union
 
 from xarray_regex.matcher import Matcher
 
@@ -122,17 +122,35 @@ class FileFinder():
             files = [os.path.join(self.root, f) for f in files]
         return files
 
-    def fix_matcher(self, idx: int, value: str):
+    def fix_matcher(self, key: Union[int, str], value: str):
         """Fix a matcher to a string.
 
         Parameters
         ----------
-        idx : int
-            Matcher index. Starts at 0.
+        key : int, or str, or tuple of str of lenght 2.
+            If int, is matcher index, starts at 0.
+            If str, can be matcher name, or a group and name combination with
+            the syntax 'group:name'.
+            When using strings, if multiple matchers are found with the same
+            name or group/name combination, all are fixed to the same value.
         value : str
             Will replace the match for all files.
+
+        Raises
+        ------
+        TypeError: key is neither int nor str.
         """
-        self.fixed_matcher[idx] = value
+        if isinstance(key, int):
+            self.fixed_matchers[key] = value
+            self.matchers[key].fix(value)
+        elif isinstance(key, str):
+            for m in self.get_matchers(key):
+                self.fixed_matchers[m.idx] = value
+        else:
+            raise TypeError("Key must be int or str.")
+
+        # The regex could have been already computed. Make sure it is updated.
+        self.create_regex()
 
     def get_matches(self, filename: str,
                     relative: bool = True) -> Dict[str, Dict]:
