@@ -32,6 +32,8 @@ class FileFinder():
 
     Attributes
     ----------
+    max_depth_scan: int
+        Maximum authorized depth when descending into filetree to scan files.
     root: str
         The root directory of the finder.
     pregex: str
@@ -55,12 +57,10 @@ class FileFinder():
         If the finder has scanned files.
     """
 
-    MAX_DEPTH_SCAN = 3
-    """Maximum authorized depth when descending into filetree to scan files.
-    Class attribute.
-    """
-
     def __init__(self, root: str, pregex: str, **replacements: str):
+
+        self.max_depth_scan = 3
+
         if isinstance(root, (list, tuple)):
             root = os.path.join(*root)
         if not os.path.isdir(root):
@@ -287,7 +287,7 @@ class FileFinder():
     def find_files(self):
         """Find files to scan.
 
-        Uses os.walk. Limit search to `MAX_DEPTH_SCAN` levels of directories
+        Uses os.walk. Limit search to `max_depth_scan` levels of directories
         deep.
         Sort files alphabetically.
 
@@ -306,7 +306,7 @@ class FileFinder():
         files = []
         for root, _, files_ in os.walk(self.root):
             depth = len(os.path.relpath(root, self.root).split(os.sep)) - 1
-            if depth > self.MAX_DEPTH_SCAN:
+            if depth > self.max_depth_scan:
                 break
             files += [os.path.relpath(os.path.join(root, file), self.root)
                       for file in files_]

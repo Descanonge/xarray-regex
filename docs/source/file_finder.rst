@@ -13,7 +13,7 @@ a proper regex later.
 When asking to find files, the finder will first create a regular-expression
 out of the pre-regex.
 It will then recursively find *all* files in the root directory and its
-subfolders, though not descending deeper than :attr:`FileFinder.MAX_DEPTH_SCAN`
+subfolders, though not descending deeper than :attr:`FileFinder.max_depth_scan`
 folders (default is 3).
 The finder only keeps files that match the regex.
 The files can be retrieved using :func:`FileFinder.get_files`.
