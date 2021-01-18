@@ -323,3 +323,29 @@ class FileFinder():
         self.scanned = True
         self.files = files_matched
 
+    def get_matchers(self, key: str) -> List[Matcher]:
+        """Return list of matchers corresponding to key.
+
+        Parameters
+        ----------
+        key: str
+            Can be matcher name, or group+name combination with the syntax:
+            'group:name'.
+
+        Raises
+        ------
+        KeyError: No matcher found.
+        """
+        k = key.split(':')
+        if len(k) == 1:
+            name, group = k[0], None
+        else:
+            name, group = k[:2]
+        selected = []
+        for m in self.matchers:
+            if m.name == name and (group is None or group == m.group):
+                selected.append(m)
+
+        if len(selected) == 0:
+            raise KeyError(f"No matcher found for key '{key}'")
+        return selected
