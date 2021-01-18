@@ -87,7 +87,8 @@ class FileFinder():
         return '\n'.join([super().__repr__(), self.__str__()])
 
     def __str__(self):
-        s = ["pre-regex: {}".format(self.pregex)]
+        s = ['root: {}'.format(self.root)]
+        s += ["pre-regex: {}".format(self.pregex)]
         if self.regex is not None:
             s += ["regex: {}".format(self.regex)]
         else:
