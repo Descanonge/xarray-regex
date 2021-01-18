@@ -1,11 +1,15 @@
 """Functions to retrieve values from filename."""
 
-from typing import Dict
+import logging
+from typing import Dict, List
 
 from datetime import datetime, timedelta
 
+log = logging.getLogger(__name__)
 
-def get_date(matches: Dict, default_date: Dict = None) -> datetime:
+
+def get_date(matches: List, default_date: Dict = None,
+             group: str = None) -> datetime:
     """Retrieve date from matched elements.
 
     If any element is not found in the filename, it will be replaced by the
@@ -15,11 +19,17 @@ def get_date(matches: Dict, default_date: Dict = None) -> datetime:
 
     Parameters
     ----------
-    matches: dict
+    matches: list
         Matches from a filename, returned by `FileFinder.get_matches`
+    group: str
+        If not None, restrict matcher to this group.
     default_date: dict, optional
         Default date. Dictionnary with keys: year, month, day, hour, minute,
         and second. Defaults to 1970-01-01 00:00:00
+
+    Raises
+    ------
+    KeyError: If no matchers are found to create a date from.
     """
     date = {"year": 1970, "month": 1, "day": 1,
             "hour": 00, "minute": 0, "second": 0}
@@ -28,7 +38,13 @@ def get_date(matches: Dict, default_date: Dict = None) -> datetime:
         default_date = {}
     date.update(default_date)
 
-    elts = {k: z['match'] for k, z in matches.items()}
+    elts = {m['matcher'].name: m['match'] for m in matches
+            if group is None or m['matcher'].group == group}
+
+    elts_needed = {'Y', 'm', 'd', 'B', 'j', 'H', 'M', 'S'}
+    if len(set(elts.keys()) & elts_needed) == 0:
+        log.warning("No matchers to retrieve a date from."
+                    " Returning default date.")
 
     elt = elts.pop("x", None)
     if elt is not None:

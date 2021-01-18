@@ -194,17 +194,15 @@ class FileFinder():
             raise ValueError("Filename did not match pattern.")
         if len(m.groups()) != self.n_matchers:
             raise IndexError("Not as many matches as matchers.")
-        matches = {}
+        matches = []
         for i in range(self.n_matchers):
             matcher = self.matchers[i]
-            if matcher.discard:
-                continue
-            matches[matcher.name] = {
+            matches.append({
                 'match': m.group(i+1),
                 'start': m.start(i+1),
                 'end': m.end(i+1),
                 'matcher': matcher
-            }
+            })
         return matches
 
     def get_func_process_filename(self, func: Callable, relative: bool = True,
