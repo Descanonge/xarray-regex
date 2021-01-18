@@ -48,7 +48,7 @@ class FileFinder():
         Segments of the pre-regex. Used to replace specific matchers.
         `['text before matcher 1', 'matcher 1',
         'text before matcher 2, 'matcher 2', ...]`
-    fixed_matcher: dict
+    fixed_matchers: dict
         Dictionnary of matchers with a set value.
         'matcher index': 'replacement string'
     files: list of str
@@ -72,7 +72,7 @@ class FileFinder():
         self.pattern = None
         self.matchers = []
         self.segments = []
-        self.fixed_matcher = dict()
+        self.fixed_matchers = dict()
         self.files = []
         self.scanned = False
 
@@ -92,10 +92,10 @@ class FileFinder():
             s += ["regex: {}".format(self.regex)]
         else:
             s += ["regex not created"]
-        if self.fixed_matcher:
+        if self.fixed_matchers:
             s += ["fixed matchers:"]
             s += ["\t fixed #{} to {}".format(i, v)
-                  for i, v in self.fixed_matcher.items()]
+                  for i, v in self.fixed_matchers.items()]
         if not self.scanned:
             s += ["not scanned"]
         else:
@@ -260,7 +260,7 @@ class FileFinder():
         for idx, m in enumerate(self.matchers):
             segments[2*idx+1] = '({})'.format(m.get_regex())
 
-        for idx, value in self.fixed_matcher.items():
+        for idx, value in self.fixed_matchers.items():
             segments[2*idx+1] = '({})'.format(value)
 
         self.regex = ''.join(segments)
