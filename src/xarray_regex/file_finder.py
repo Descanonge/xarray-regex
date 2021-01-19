@@ -1,5 +1,10 @@
 """Find files using a pre-regex."""
 
+# This file is part of the 'xarray-regex' project
+# (http://github.com/Descanonge/xarray-regex) and subject
+# to the MIT License as defined in the file 'LICENSE',
+# at the root of this project. © 2021 Clément Haëck
+
 import os
 import logging
 import re
