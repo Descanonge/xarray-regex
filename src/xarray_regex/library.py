@@ -39,7 +39,8 @@ def get_date(matches: List, default_date: Dict = None,
     date.update(default_date)
 
     elts = {m['matcher'].name: m['match'] for m in matches
-            if group is None or m['matcher'].group == group}
+            if (not m['matcher'].discard
+                and (group is None or m['matcher'].group == group))}
 
     elts_needed = {'Y', 'm', 'd', 'B', 'j', 'H', 'M', 'S'}
     if len(set(elts.keys()) & elts_needed) == 0:
