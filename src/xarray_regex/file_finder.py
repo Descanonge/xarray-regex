@@ -299,6 +299,8 @@ class FileFinder():
         self.set_fixed_matchers_in_segments()
         self.regex = ''.join(self.segments)
         self.pattern = re.compile(self.regex + "$")
+        self.scanned = False
+        self.files = []
 
     def set_fixed_matchers_in_segments(self):
         for idx, value in self.fixed_matchers.items():
