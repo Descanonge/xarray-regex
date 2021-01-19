@@ -16,13 +16,13 @@ It allows to easily create regular expressions using 'Matchers', to fix some
 elements of the expressions to select only certain files, and to easily
 retrieve information from filenames.
 
-This package has a main entry point: the :doc:`File finder<file_finder>` object.
-
 .. toctree::
    :maxdepth: 3
    :caption: Contents:
 
-   file_finder
+   find_files
+   retrieve_values
+   fix_matchers
    examples
 
 .. toctree::

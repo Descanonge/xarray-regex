@@ -1,8 +1,8 @@
 
 .. currentmodule:: xarray_regex.file_finder
 
-File Finder
------------
+Finding files
+-------------
 
 The main entry point of this package is the :class:`FileFinder` class.
 This is the object that will find files according to a regular expression.
@@ -130,29 +130,9 @@ want to use a specific regex::
 Discard keyword
 ###############
 
-Information can be retrieved from the matches in the filename, but one might
-discard a matcher so it will not be used in that case.
+doc:`Information can be retrieved<retrieving_values>` from the matches in the
+filename, but one might discard a matcher so it would not be used.
 For example for a file of weekly averages with a filename indicated the start
 and end dates of the average, we might want to only recover the starting date::
 
   sst_%(x)-%(x:discard)
-
-
-Retrieve information
-====================
-
-As some metadata might only be found in the filenames, FileFinder offer the
-possibility to retrieve it easily using the :func:`FileFinder.get_matches`
-method.
-This match a filename to the regex of the finder and returns a dictionnary of
-the matches found.
-
-The package supply a function to retrieve a datetime object::
-
-  from xarray_regex.library import get_date
-  matches = finder.get_matches(filename)
-  date = get_date(matches)
-
-
-In Xarray, this can be used to add metadata when opening a multi-file
-dataset using xarray.open_mfdataset.
