@@ -39,7 +39,7 @@ class FileFinder():
     pregex: str
         Pre-regex.
     regex: str
-        Regex obtained from the pre-regex. Is None before being created.
+        Regex obtained from the pre-regex.
     pattern: re.pattern
         Compiled pattern obtained from the regex.
     matchers: list of Matchers
@@ -68,7 +68,7 @@ class FileFinder():
         self.root = root
 
         self.pregex = ''
-        self.regex = None
+        self.regex = ''
         self.pattern = None
         self.matchers = []
         self.segments = []
@@ -77,6 +77,7 @@ class FileFinder():
         self.scanned = False
 
         self.set_pregex(pregex, **replacements)
+        self.create_regex()
 
     @property
     def n_matchers(self) -> int:
@@ -100,7 +101,7 @@ class FileFinder():
         if not self.scanned:
             s += ["not scanned"]
         else:
-            s += ["found {} files".format(len(self.files))]
+            s += ["scanned: found {} files".format(len(self.files))]
         return '\n'.join(s)
 
     def get_files(self, relative: bool = False) -> List[str]:
@@ -149,8 +150,7 @@ class FileFinder():
         else:
             raise TypeError("Key must be int or str.")
 
-        # The regex could have been already computed. Make sure it is updated.
-        self.create_regex()
+        self.update_regex()
 
     def get_matches(self, filename: str,
                     relative: bool = True) -> Dict[str, Dict]:
@@ -169,11 +169,11 @@ class FileFinder():
 
         Returns
         -------
-        dict of dict
-            {'matcher name': {'match': string matched,
-                              'start': start index in filename,
-                              'end': end index in filename,
-                              'matcher': Matcher object}}
+        list of dict
+            [{'match': string matched,
+              'start': start index in filename,
+              'end': end index in filename,
+              'matcher': Matcher object}, ...]
 
         Raises
         ------
@@ -181,9 +181,7 @@ class FileFinder():
         ValueError: The filename did not match the pattern.
         IndexError: Not as many matches as matchers.
         """
-        if self.regex is None:
-            self.create_regex()
-        if self.regex == '':
+        if not self.regex:
             raise AttributeError("Finder is missing a regex.")
 
         if not relative:
@@ -267,21 +265,9 @@ class FileFinder():
         self.pregex = pregex
 
     def create_regex(self):
-        """Create regex from pre-regex.
-
-        Lazily called when scanning files.
-        """
+        """Create regex from pre-regex. """
         self.scan_pregex()
-
-        segments = self.segments.copy()
-        for idx, m in enumerate(self.matchers):
-            segments[2*idx+1] = '({})'.format(m.get_regex())
-
-        for idx, value in self.fixed_matchers.items():
-            segments[2*idx+1] = '({})'.format(value)
-
-        self.regex = ''.join(segments)
-        self.pattern = re.compile(self.regex + "$")
+        self.update_regex()
 
     def scan_pregex(self):
         """Scan pregex for matchers.
@@ -300,6 +286,23 @@ class FileFinder():
             splits += [m.start(), m.end()]
         self.segments = [self.pregex[i:j]
                          for i, j in zip(splits, splits[1:]+[None])]
+
+        # Replace matcher by its regex
+        for idx, m in enumerate(self.matchers):
+            self.segments[2*idx+1] = '({})'.format(m.get_regex())
+
+    def update_regex(self):
+        """Update regex.
+
+        Set fixed matchers. Re-compile pattern. Scrap previous scanning.
+        """
+        self.set_fixed_matchers_in_segments()
+        self.regex = ''.join(self.segments)
+        self.pattern = re.compile(self.regex + "$")
+
+    def set_fixed_matchers_in_segments(self):
+        for idx, value in self.fixed_matchers.items():
+            self.segments[2*idx+1] = '({})'.format(value)
 
     def find_files(self):
         """Find files to scan.
