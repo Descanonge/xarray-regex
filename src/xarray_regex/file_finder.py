@@ -144,11 +144,13 @@ class FileFinder():
 
         Raises
         ------
+        TypeError: Value must be a string.
         TypeError: key is neither int nor str.
         """
+        if not isinstance(value, str):
+            raise TypeError("Value must be a str.")
         if isinstance(key, int):
             self.fixed_matchers[key] = value
-            self.matchers[key].fix(value)
         elif isinstance(key, str):
             for m in self.get_matchers(key):
                 self.fixed_matchers[m.idx] = value
