@@ -109,7 +109,8 @@ class FileFinder():
             s += ["scanned: found {} files".format(len(self.files))]
         return '\n'.join(s)
 
-    def get_files(self, relative: bool = False) -> List[str]:
+    def get_files(self, relative: bool = False,
+                  nested: List[str] = None) -> List[str]:
         """Return files that matches the regex.
 
         Lazily scan files: if files were already scanned, just return
@@ -119,13 +120,54 @@ class FileFinder():
         ----------
         relative : bool
             If True, filenames are returned relative to the finder
-            root directory. Defaults to false.
+            root directory. If not, filenames are absolute. Defaults to False.
+        nested : list of str
+            If not None, return nested list of filenames with each level
+            corresponding to a group in this argument. Last group in the list is
+            at the innermost level. A level specified as None refer to matchers
+            without a group.
+
+        Raises
+        ------
+        KeyError: A level in `nested` is not in the pre-regex groups.
         """
+        def make_abs(f):
+            return os.path.join(self.root, f)
+
+        def get_match(m, group):
+            return ''.join([m_['match'] for m_ in m
+                            if m_['matcher'].group == group])
+
+        def nest(files_matches, groups, relative):
+            if len(groups) == 0:
+                return [make_abs(f) if not relative else f
+                        for f, m in files_matches]
+
+            group = groups[0]
+            files_grouped = []
+            matches = {}
+            for f, m in files_matches:
+                match = get_match(m, group)
+                if match not in matches:
+                    matches[match] = len(matches)
+                    files_grouped.append([])
+                files_grouped[matches[match]].append((f, m))
+
+            return [nest(grp, groups[1:], relative) for grp in files_grouped]
+
         if not self.scanned:
             self.find_files()
-        files = self.files
-        if not relative:
-            files = [os.path.join(self.root, f) for f in files]
+
+        if nested is None:
+            files = [make_abs(f) if not relative else f
+                     for f, m in self.files]
+        else:
+            groups = [m.group for m in self.matchers]
+            for g in nested:
+                if g not in groups:
+                    raise KeyError(f'{g} is not in FileFinder groups.')
+            files = nest(self.files, nested, relative)
+
         return files
 
     def fix_matcher(self, key: Union[int, str], value: str):
@@ -345,8 +387,14 @@ class FileFinder():
             raise IndexError(f"No files were found in {self.root}")
         log.debug("Found %s files in %s", len(files), self.root)
 
-        files_matched = [f for f in files
-                         if self.pattern.match(f) is not None]
+        files_matched = []
+        for f in files:
+            try:
+                matches = self.get_matches(f, relative=True)
+            except ValueError:
+                pass
+            else:
+                files_matched.append((f, matches))
 
         self.scanned = True
         self.files = files_matched
