@@ -2,7 +2,7 @@
 .. currentmodule:: xarray_regex.file_finder
 
 Retrieve information
-====================
+--------------------
 
 As some metadata might only be found in the filenames, FileFinder offer the
 possibility to retrieve it easily using the :func:`FileFinder.get_matches`
@@ -20,7 +20,7 @@ matches::
 
 
 Combine with Xarray
--------------------
+===================
 
 Retrieving information can be used when opening multiple files with
 `xarray.open_mfdataset()

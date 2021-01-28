@@ -136,3 +136,20 @@ For example for a file of weekly averages with a filename indicated the start
 and end dates of the average, we might want to only recover the starting date::
 
   sst_%(x)-%(x:discard)
+
+
+Nesting files
+=============
+
+Found files can be retrieved using :func:`FileFinder.get_files`. This outputs
+a list of all files (relative to the finder root, or as absolute paths), sorted
+alphabetically.
+They can also be returned as a nested lists of filenames.
+This is aimed to work with `xarray.open_mfdataset()
+<http://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__,
+which will merge files in a specific order when supplied a nested list of files.
+
+To this end, one must specify group names to the `nested` argument of the same
+function. The rightmost group will correspond to the innermost level.
+
+An example is available in the :ref:`examples<Nested files>`.
