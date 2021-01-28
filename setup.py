@@ -37,7 +37,8 @@ setup(name='xarray-regex',
 
       url='https://github.com/Descanonge/xarray-regex',
       project_urls={
-          'Source': 'https://github.com/Descanonge/xarray-regex'
+          'Source': 'https://github.com/Descanonge/xarray-regex',
+          'Documentation': 'https://xarray-regex.readthedocs.io'
       },
 
       author='Clément Haëck',
