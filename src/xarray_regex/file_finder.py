@@ -201,6 +201,20 @@ class FileFinder():
 
         self.update_regex()
 
+    def fix_matchers(self, fixes: Dict[Union[int, str], str] = None):
+        """Fix multiple values at once.
+
+        Parameters
+        ----------
+        fixes: dict
+           Dictionnary of matcher key: value. See :func:`fix_matcher` for
+           details. If None, no matcher will be fixed.
+        """
+        if fixes is None:
+            fixes = {}
+        for f in fixes.items():
+            self.fix_matcher(*f)
+
     def get_matches(self, filename: str,
                     relative: bool = True) -> Dict[str, Dict]:
         """Get matches for a given filename.

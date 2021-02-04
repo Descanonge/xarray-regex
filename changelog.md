@@ -1,4 +1,6 @@
 
+- [2021-02-04] Fix multiple matchers at once.
+
 ## v0.2.0
 
 - [2021-01-28] Add possibility to retrieve files in a nested list.
