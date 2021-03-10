@@ -37,8 +37,6 @@ class FileFinder():
 
     Attributes
     ----------
-    max_depth_scan: int
-        Maximum authorized depth when descending into filetree to scan files.
     root: str
         The root directory of the finder.
     pregex: str
@@ -46,7 +44,8 @@ class FileFinder():
     regex: str
         Regex obtained from the pre-regex.
     pattern: re.pattern
-        Compiled pattern obtained from the regex.
+    subpatterns: list of re.pattern
+        Compiled patterns for each directory obtained from the regex.
     matchers: list of Matchers
         List of matchers for this finder, in order.
     segments: list of str
@@ -64,8 +63,6 @@ class FileFinder():
 
     def __init__(self, root: str, pregex: str, **replacements: str):
 
-        self.max_depth_scan = 3
-
         if isinstance(root, (list, tuple)):
             root = os.path.join(*root)
         if not os.path.isdir(root):
@@ -75,6 +72,7 @@ class FileFinder():
         self.pregex = ''
         self.regex = ''
         self.pattern = None
+        self.subpatterns = []
         self.matchers = []
         self.segments = []
         self.fixed_matchers = dict()
@@ -362,6 +360,8 @@ class FileFinder():
         self.set_fixed_matchers_in_segments()
         self.regex = ''.join(self.segments)
         self.pattern = re.compile(self.regex + "$")
+        self.subpatterns = [re.compile(rgx + "$")
+                         for rgx in self.regex.split(os.path.sep)]
         self.scanned = False
         self.files = []
 
@@ -372,8 +372,6 @@ class FileFinder():
     def find_files(self):
         """Find files to scan.
 
-        Uses os.walk. Limit search to `max_depth_scan` levels of directories
-        deep.
         Sort files alphabetically.
 
         Raises
@@ -389,12 +387,22 @@ class FileFinder():
             raise AttributeError("Finder is missing a regex.")
 
         files = []
-        for root, _, files_ in os.walk(self.root):
-            depth = len(os.path.relpath(root, self.root).split(os.sep)) - 1
-            if depth > self.max_depth_scan:
-                break
-            files += [os.path.relpath(os.path.join(root, file), self.root)
-                      for file in files_]
+        for dirpath, dirnames, filenames in os.walk(self.root):
+            # Feels hacky, better way ?
+            depth = dirpath.count(os.sep) - self.root.count(os.sep)
+            pattern = self.subpatterns[depth]
+
+            if depth == len(self.subpatterns)-1:
+                dirnames.clear()  # Look no deeper
+                files += [os.path.relpath(os.path.join(dirpath, f), self.root)
+                          for f in filenames]
+
+            # Removes directories not matching regex
+            # We do double regex on directories, good enough
+            to_remove = [d for d in dirnames if not pattern.match(d)]
+            for d in to_remove:
+                dirnames.remove(d)
+
         files.sort()
 
         if len(files) == 0:
