@@ -336,10 +336,11 @@ class FileFinder():
         Add matchers objects to self.
         Set segments attribute.
         """
-        regex = (r"%\((?:(?P<group>[a-zA-Z]*):)??"
+        regex = (r"%\((?:(?P<group>[a-zA-Z]*):)?"
                  r"(?P<name>[a-zA-Z]*)"
-                 r"(?P<cus>:custom=)?(?(cus)(?P<cus_rgx>[^:]*):)"
-                 r"(?P<discard>(?(cus)|:)discard)?\)")
+                 r"(:custom=(?P<custom>.*?))?"
+                 r"(:fmt=(?P<fmt>.*?))?"
+                 r"(?P<discard>:discard)?\)")
         splits = [0]
         self.matchers = []
         for i, m in enumerate(re.finditer(regex, self.pregex)):

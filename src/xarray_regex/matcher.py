@@ -59,6 +59,7 @@ class Matcher():
         self.custom = False
         self.rgx = None
         self.discard = False
+        self.format = False
 
         self.match = m.group()[2:-1]  # slicing removes %()
 
@@ -82,8 +83,9 @@ class Matcher():
         """
         group = m.group('group')
         name = m.group('name')
-        custom = m.group('cus') is not None
-        rgx = m.group('cus_rgx')
+        rgx = m.group('custom')
+        custom = rgx is not None
+        fmt = m.group('fmt')
 
         if name is None:
             raise NameError("Matcher name cannot be empty.")
@@ -93,6 +95,8 @@ class Matcher():
         self.group = group
         self.name = name
         self.custom = custom
+        self.format = fmt
+        self.discard = m.group('discard') is not None
 
         if custom:
             self.rgx = rgx
