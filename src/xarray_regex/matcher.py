@@ -36,30 +36,38 @@ class Matcher():
         The string that created the matcher `%(match)`.
     """
 
-    NAME_RGX = {"idx": r"\d+",
-                "Y": r"\d\d\d\d",
-                "m": r"\d\d",
-                "d": r"\d\d",
-                "j": r"\d\d\d",
-                "H": r"\d\d",
-                "M": r"\d\d",
-                "S": r"\d\d",
-                "x": r"%Y%m%d",
-                "X": r"%H%M%S",
-                "F": r"%Y-%m-%d",
-                "B": r"[a-zA-Z]*",
-                "text": r"[a-zA-Z]*",
-                "char": r"\S*"}
+    NAME_RGX = {
+        "idx": [r"\d+", 'd'],
+        "Y": [r"\d\d\d\d", '04d'],
+        "m": [r"\d\d", '02d'],
+        "d": [r"\d\d", '02d'],
+        "j": [r"\d\d\d", '03d'],
+        "H": [r"\d\d", '02d'],
+        "M": [r"\d\d", '02d'],
+        "S": [r"\d\d", '02d'],
+        "x": [r"%Y%m%d", '08d'],
+        "X": [r"%H%M%S", '08d'],
+        "F": [r"%Y-%m-%d", 's'],
+        "B": [r"[a-zA-Z]*", 's'],
+        "text": [r"[a-zA-Z]*", 's'],
+        "char": [r"\S*", 's']
+    }
     """Regex str for each type of element."""
+
+    REGEX = (r"%\((?:(?P<group>[a-zA-Z]*):)?"
+             r"(?P<name>[a-zA-Z]*)"
+             r"(:custom=(?P<custom>.*?))?"
+             r"(:fmt=(?P<fmt>.*?))?"
+             r"(?P<discard>:discard)?\)")
+    """Regex to find matcher in pre-regex."""
 
     def __init__(self, m: re.match, idx: int = 0):
         self.idx = idx
         self.group = None
         self.name = None
-        self.custom = False
         self.rgx = None
         self.discard = False
-        self.format = False
+        self.fmt = None
 
         self.match = m.group()[2:-1]  # slicing removes %()
 
