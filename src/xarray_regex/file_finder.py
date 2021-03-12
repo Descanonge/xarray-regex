@@ -248,7 +248,7 @@ class FileFinder():
         if not relative:
             filename = os.path.relpath(filename, self.root)
 
-        m = self.pattern.match(filename)
+        m = self.pattern.fullmatch(filename)
         if m is None:
             raise ValueError("Filename did not match pattern.")
         if len(m.groups()) != self.n_matchers:
@@ -355,8 +355,8 @@ class FileFinder():
         """
         self.set_fixed_matchers_in_segments()
         self.regex = ''.join(self.segments)
-        self.pattern = re.compile(self.regex + "$")
-        self.subpatterns = [re.compile(rgx + "$")
+        self.pattern = re.compile(self.regex)
+        self.subpatterns = [re.compile(rgx)
                             for rgx in self.regex.split(os.path.sep)]
         self.scanned = False
         self.files = []
@@ -401,7 +401,7 @@ class FileFinder():
 
             # Removes directories not matching regex
             # We do double regex on directories, good enough
-            to_remove = [d for d in dirnames if not pattern.match(d)]
+            to_remove = [d for d in dirnames if not pattern.fullmatch(d)]
             for d in to_remove:
                 dirnames.remove(d)
 
