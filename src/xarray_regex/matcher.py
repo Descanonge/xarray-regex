@@ -6,6 +6,7 @@
 # at the root of this project. © 2021 Clément Haëck
 
 import re
+from .format import generate_expression
 
 
 class Matcher():
@@ -36,7 +37,7 @@ class Matcher():
         The string that created the matcher `%(match)`.
     """
 
-    NAME_RGX = {
+    DEFAULT_ELTS = {
         "idx": [r"\d+", 'd'],
         "Y": [r"\d\d\d\d", '04d'],
         "m": [r"\d\d", '02d'],
@@ -56,7 +57,7 @@ class Matcher():
 
     REGEX = (r"%\((?:(?P<group>[a-zA-Z]*):)?"
              r"(?P<name>[a-zA-Z]*)"
-             r"(:custom=(?P<custom>.*?))?"
+             r"(:rgx=(?P<rgx>.*?))?"
              r"(:fmt=(?P<fmt>.*?))?"
              r"(?P<discard>:discard)?\)")
     """Regex to find matcher in pre-regex."""
@@ -91,33 +92,37 @@ class Matcher():
         """
         group = m.group('group')
         name = m.group('name')
-        rgx = m.group('custom')
-        custom = rgx is not None
+        rgx = m.group('rgx')
         fmt = m.group('fmt')
 
         if name is None:
             raise NameError("Matcher name cannot be empty.")
-        if custom and not rgx:
+        if rgx is not None and rgx == '':
             raise ValueError("Matcher custom regex cannot be empty.")
+        if fmt is not None and fmt == '':
+            raise ValueError("Matcher custom format cannot be empty.")
 
         self.group = group
         self.name = name
-        self.custom = custom
-        self.format = fmt
         self.discard = m.group('discard') is not None
 
-        if custom:
+        if name in self.DEFAULT_ELTS:
+            self.rgx, self.format = self.DEFAULT_ELTS[name]
+
+        if rgx:
             self.rgx = rgx
-        else:
-            self.rgx = self.NAME_RGX[name]
+        if fmt:
+            self.fmt = fmt
+            if not rgx and name not in self.DEFAULT_ELTS:
+                self.rgx = generate_expression(fmt)
 
     def get_regex(self) -> str:
         """Get matcher regex.
 
-        Replace the matchers name by regex from `Matcher.NAME_RGX`.
-        If there is a custom regex, recursively replace '%' followed by a single
-        letter by the corresponding regex from `NAME_RGX`. '%%' is replaced by a
-        single percentage character.
+        Replace the matchers name by regex from `Matcher.NAME_RGX`. If there is
+        a custom regex, recursively replace '%' followed by a single letter by
+        the corresponding regex from `NAME_RGX`. '%%' is replaced by a single
+        percentage character.
 
         Raises
         ------
