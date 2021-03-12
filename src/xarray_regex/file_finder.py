@@ -392,6 +392,12 @@ class FileFinder():
                 dirnames.clear()  # Look no deeper
                 files += [os.path.relpath(os.path.join(dirpath, f), self.root)
                           for f in filenames]
+            else:
+                dirlogs = dirnames[:3]
+                if len(dirnames) > 3:
+                    dirlogs += ['...']
+                log.debug('depth: %d, pattern: %s, folders:\n\t%s',
+                          depth, pattern.pattern, '\n\t'.join(dirlogs))
 
             # Removes directories not matching regex
             # We do double regex on directories, good enough
@@ -403,7 +409,6 @@ class FileFinder():
 
         if len(files) == 0:
             raise IndexError(f"No files were found in {self.root}")
-        log.debug("Found %s files in %s", len(files), self.root)
 
         files_matched = []
         for f in files:
@@ -413,6 +418,13 @@ class FileFinder():
                 pass
             else:
                 files_matched.append((f, matches))
+
+        filelogs = files[::3]
+        if len(files) > 3:
+            filelogs += ['...']
+        log.debug("regex: %s, files:\n\t%s", self.regex, '\n\t'.join(filelogs))
+        log.debug("Found %s matching files in %s",
+                  len(files_matched), self.root)
 
         self.scanned = True
         self.files = files_matched
