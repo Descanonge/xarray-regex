@@ -452,7 +452,7 @@ class FileFinder():
             if len(k) == 1:
                 name, group = k[0], None
             else:
-                name, group = k[:2]
+                group, name = k[:2]
             selected = []
             for m in self.matchers:
                 if m.name == name and (group is None or group == m.group):
