@@ -6,7 +6,7 @@ RGX_ESCAPE = '+*?[]()^$|.'
 
 def extract_params(format):
     align = None
-    fill = ' '
+    fill = None
     if format[0] in '<>=^':
         align = format[0]
         format = format[1:]
@@ -28,7 +28,13 @@ def extract_params(format):
     zero = False
     if format and format[0] == '0':
         zero = True
+        if align is None:
+            align = '='
+        if fill is None:
+            fill = '0'
         format = format[1:]
+    if fill is None:
+        fill = ' '
 
     width = ''
     while format:
@@ -88,17 +94,42 @@ def generate_expression_s(params):
 
 
 def generate_expression_d(params):
+    if params['align'] is None:
+        params['align'] = '>'
+
     rgx = ''
+    align, loc = get_align(*[params[p] for p in ['align', 'width', 'fill']])
+    if loc in ['left', 'center']:
+        rgx += align
+
     rgx += get_sign(params['sign'])
-    rgx += get_align(*[params[p] for p in ['align', 'width', 'fill', 'zero']])
+
+    if loc == 'middle':
+        rgx += align
+
     rgx += get_left_point(params['grouping'])
+
+    if loc in ['right', 'center']:
+        rgx += align
+
     return rgx
 
 
 def generate_expression_f(params):
+    if params['align'] is None:
+        params['align'] = '>'
+
     rgx = ''
+    align, loc = get_align(*[params[p] for p in ['align', 'width', 'fill']])
+
+    if loc in ['left', 'center']:
+        rgx += align
+
     rgx += get_sign(params['sign'])
-    rgx += get_align(*[params[p] for p in ['align', 'width', 'fill', 'zero']])
+
+    if loc in ['middle']:
+        rgx += align
+
     rgx += get_left_point(params['grouping'])
 
     precision = params['precision']
@@ -107,6 +138,9 @@ def generate_expression_f(params):
     if precision != 0 or params['alternate']:
         rgx += r'\.'
     rgx += r'\d{{{}}}'.format(precision)
+
+    if loc in ['right']:
+        rgx += align
 
     return rgx
 
@@ -123,17 +157,19 @@ def get_sign(sign):
     return rgx
 
 
-def get_align(align, width, fill, zero):
-    if align is not None and align in '<>^':
-        raise KeyError("Align <>^ not supported")
-
+def get_align(align, width, fill):
     rgx = ''
     if width and width > 0:
-        if zero:
-            fill = '0'
         rgx += '{}*'.format(escape(fill))
 
-    return rgx
+    loc = {
+        '=': 'middle',
+        '>': 'left',
+        '<': 'right',
+        '^': 'center'
+    }[align]
+
+    return rgx, loc
 
 
 def get_left_point(grouping):
