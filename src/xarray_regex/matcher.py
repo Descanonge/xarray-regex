@@ -109,7 +109,7 @@ class Matcher():
         self.discard = m.group('discard') is not None
 
         if name in self.DEFAULT_ELTS:
-            self.rgx, self.format = self.DEFAULT_ELTS[name]
+            self.rgx, self.fmt = self.DEFAULT_ELTS[name]
 
         if rgx:
             self.rgx = rgx

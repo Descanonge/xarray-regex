@@ -186,13 +186,15 @@ class FileFinder():
         ------
         TypeError: key is neither int nor str.
         """
+        self._fix_matcher(key, value, self.fixed_matchers)
+        self.update_regex()
+
+    def _fix_matcher(self, key, value, fixed_matchers):
         for m in self.get_matchers(key):
             if isinstance(value, str):
-                self.fixed_matchers[m.idx] = value
+                fixed_matchers[m.idx] = value
             else:
-                self.fixed_matchers[m.idx] = m.format(value)
-
-        self.update_regex()
+                fixed_matchers[m.idx] = m.format(value)
 
     def fix_matchers(self, fixes: Dict[Union[int, str], str] = None):
         """Fix multiple values at once.
@@ -259,9 +261,21 @@ class FileFinder():
             })
         return matches
 
-    def get_filename(self, **fixes):
-        segments = self.segments.copy()
+    def get_filename(self, fixes) -> str:
+        fixed_matchers = self.fixed_matchers.copy()
+        for key, value in fixes.items():
+            self._fix_matcher(key, value, fixed_matchers)
 
+        if any(i not in fixed_matchers for i in range(self.n_matchers)):
+            raise TypeError("Not all matchers were fixed.")
+
+        segments = self.set_fixed_matchers_in_segments(
+            self.segments.copy(), fixed_matchers, False)
+
+        filename = ''.join(segments)
+        filename = re.sub(r'\\(.)', r'\1', filename)
+
+        return filename
 
     def get_func_process_filename(self, func: Callable, relative: bool = True,
                                   *args, **kwargs) -> Callable:
@@ -360,9 +374,21 @@ class FileFinder():
         self.scanned = False
         self.files = []
 
-    def set_fixed_matchers_in_segments(self):
-        for idx, value in self.fixed_matchers.items():
-            self.segments[2*idx+1] = '({})'.format(value)
+    def set_fixed_matchers_in_segments(
+            self, segments: List[str] = None,
+            fixed_matchers: Dict[int, str] = None,
+            capture: bool = True) -> List[str]:
+
+        if segments is None:
+            segments = self.segments
+        if fixed_matchers is None:
+            fixed_matchers = self.fixed_matchers
+        for idx, value in fixed_matchers.items():
+            if capture:
+                segments[2*idx+1] = '({})'.format(value)
+            else:
+                segments[2*idx+1] = value
+        return segments
 
     def find_files(self):
         """Find files to scan.
