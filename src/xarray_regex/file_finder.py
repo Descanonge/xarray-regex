@@ -179,23 +179,18 @@ class FileFinder():
             the syntax 'group:name'.
             When using strings, if multiple matchers are found with the same
             name or group/name combination, all are fixed to the same value.
-        value : str
+        value :
             Will replace the match for all files.
 
         Raises
         ------
-        TypeError: Value must be a string.
         TypeError: key is neither int nor str.
         """
-        if not isinstance(value, str):
-            raise TypeError("Value must be a str.")
-        if isinstance(key, int):
-            self.fixed_matchers[key] = value
-        elif isinstance(key, str):
-            for m in self.get_matchers(key):
+        for m in self.get_matchers(key):
+            if isinstance(value, str):
                 self.fixed_matchers[m.idx] = value
-        else:
-            raise TypeError("Key must be int or str.")
+            else:
+                self.fixed_matchers[m.idx] = m.format(value)
 
         self.update_regex()
 
@@ -263,6 +258,10 @@ class FileFinder():
                 'matcher': matcher
             })
         return matches
+
+    def get_filename(self, **fixes):
+        segments = self.segments.copy()
+
 
     def get_func_process_filename(self, func: Callable, relative: bool = True,
                                   *args, **kwargs) -> Callable:
@@ -429,29 +428,38 @@ class FileFinder():
         self.scanned = True
         self.files = files_matched
 
-    def get_matchers(self, key: str) -> List[Matcher]:
+    def get_matchers(self, key: Union[int, str]) -> List[Matcher]:
         """Return list of matchers corresponding to key.
 
         Parameters
         ----------
-        key: str
-            Can be matcher name, or group+name combination with the syntax:
-            'group:name'.
+        key: int, str, or list of int
+            Can be matcher index, name, or group+name combination with the
+            syntax: 'group:name'.
 
         Raises
         ------
         KeyError: No matcher found.
+        TypeError: Key type is not valid.
         """
-        k = key.split(':')
-        if len(k) == 1:
-            name, group = k[0], None
-        else:
-            name, group = k[:2]
-        selected = []
-        for m in self.matchers:
-            if m.name == name and (group is None or group == m.group):
-                selected.append(m)
+        if isinstance(key, int):
+            return [self.matchers[key]]
+        if all([isinstance(k, int) for k in key]):
+            return [self.matchers[k] for k in key]
 
-        if len(selected) == 0:
-            raise KeyError(f"No matcher found for key '{key}'")
-        return selected
+        if isinstance(key, str):
+            k = key.split(':')
+            if len(k) == 1:
+                name, group = k[0], None
+            else:
+                name, group = k[:2]
+            selected = []
+            for m in self.matchers:
+                if m.name == name and (group is None or group == m.group):
+                    selected.append(m)
+
+            if len(selected) == 0:
+                raise KeyError(f"No matcher found for key '{key}'")
+            return selected
+
+        raise TypeError("Key must be int, str or list of int")

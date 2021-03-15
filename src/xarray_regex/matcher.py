@@ -8,6 +8,8 @@
 import re
 from .format import generate_expression
 
+from typing import Any
+
 
 class Matcher():
     """Manage a matcher inside the pre-regex.
@@ -115,6 +117,9 @@ class Matcher():
             self.fmt = fmt
             if not rgx and name not in self.DEFAULT_ELTS:
                 self.rgx = generate_expression(fmt)
+
+    def format(self, value: Any):
+        return '{{:{}}}'.format(self.fmt).format(value)
 
     def get_regex(self) -> str:
         """Get matcher regex.
