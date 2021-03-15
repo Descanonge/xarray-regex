@@ -127,7 +127,7 @@ def generate_expression_f(params):
 
     rgx += get_sign(params['sign'])
 
-    if loc in ['middle']:
+    if loc == 'middle':
         rgx += align
 
     rgx += get_left_point(params['grouping'])
@@ -139,7 +139,7 @@ def generate_expression_f(params):
         rgx += r'\.'
     rgx += r'\d{{{}}}'.format(precision)
 
-    if loc in ['right']:
+    if loc in ['right', 'center']:
         rgx += align
 
     return rgx
