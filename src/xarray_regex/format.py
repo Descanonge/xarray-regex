@@ -1,6 +1,6 @@
 
 
-ALLOWED_TYPES = 'fd'
+ALLOWED_TYPES = 'fds'
 RGX_ESCAPE = '+*?[]()^$|.'
 
 
