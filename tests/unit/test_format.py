@@ -17,6 +17,12 @@ def assert_format(string, fmt):
         f"No match. Format '{fmt}'. Pattern '{pattern}'. String '{string}'"
 
 
+def assert_parse(number, string, fmt):
+    parsed = xfmt.parse(string, fmt)
+    assert number == parsed, \
+        f"Not parsed. Format '{fmt}'. Number '{number}'. Parsed '{parsed}'"
+
+
 signs = ['', '+', '-', ' ']
 zeros = ['', '0']
 alts = ['', '#']
@@ -35,6 +41,7 @@ def test_format_d(align, sign, width, grouping, number):
     fmt = align+sign+width+grouping + 'd'
     s = '{{:{}}}'.format(fmt).format(number)
     assert_format(s, fmt)
+    assert_parse(number, s, fmt)
 
 
 @pytest.mark.parametrize('align', aligns)
@@ -47,3 +54,11 @@ def test_format_f(align, sign, width, grouping, precision, number):
     fmt = align+sign+width+grouping+precision + 'f'
     s = '{{:{}}}'.format(fmt).format(number)
     assert_format(s, fmt)
+
+    if precision == '':
+        precision = 6
+    else:
+        precision = int(precision[-1])
+    number = round(number, precision)
+
+    assert_parse(number, s, fmt)
