@@ -178,3 +178,35 @@ def get_left_point(grouping):
     else:
         rgx = r'\d*'
     return rgx
+
+
+def parse(s: str, fmt: str):
+    params = extract_params(fmt)
+    if params['type'] == 'd':
+        return parse_d(s, params)
+    if params['type'] == 'f':
+        return parse_f(s, params)
+    if params['type'] == 's':
+        return s
+
+
+def parse_d(s: str, params) -> int:
+    """Parse integer from formatted string. """
+    return int(remove_special(s, params))
+
+
+def parse_f(s: str, params) -> float:
+    """Parse float from formatted string."""
+    return float(remove_special(s, params))
+
+
+def remove_special(s: str, params) -> int:
+    """Remove special characters. """
+    if params['fill'] == '0':
+        params['fill'] = None
+    to_remove = [escape(params[c]) for c in ['grouping', 'fill']
+                 if params[c] is not None]
+    if not to_remove:
+        return s
+    pattern = '[{}]'.format(''.join(to_remove))
+    return re.sub(pattern, '', s)
