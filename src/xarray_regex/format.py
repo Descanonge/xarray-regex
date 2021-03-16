@@ -1,10 +1,36 @@
+"""Generate regex from string format, and parse strings.
 
+Parameters of the format-string are retrieved.
+See `<https://docs.python.org/3/library/string.html#formatspec>`__ for the
+specification of the format mini-language.
+This code is inspired by the `parse module
+<https://github.com/r1chardj0n3s/parse>`__.
+
+Thoses parameters are then used to generate a regular expression, or to parse
+a string formed from the format.
+
+Only 's', 'd', and 'f' formats are supported.
+
+The width of the format string is not respected when matching with a regular
+expression.
+
+The parsing is quite naive and can fail on some cases.
+See :func:`parse` for details.
+
+The regex generation and parsing are tested in `tests/unit/test_format.py`.
+"""
+
+import re
 
 ALLOWED_TYPES = 'fds'
 RGX_ESCAPE = '+*?[]()^$|.'
 
 
 def extract_params(format):
+    """Extract parameters from format string.
+
+    [[fill]align][sign][#][0][width][grouping][precision][type]
+    """
     align = None
     fill = None
     if format[0] in '<>=^':
@@ -72,6 +98,7 @@ def extract_params(format):
 
 
 def escape(char: str) -> str:
+    """Escape special regex characters."""
     if len(char) > 1:
         raise IndexError("String to escape longer than one character")
     if char in RGX_ESCAPE:
@@ -80,6 +107,7 @@ def escape(char: str) -> str:
 
 
 def generate_expression(format):
+    """Generate regex from format string."""
     params = extract_params(format)
     if params['type'] == 'f':
         return generate_expression_f(params)
@@ -146,6 +174,7 @@ def generate_expression_f(params):
 
 
 def get_sign(sign):
+    """Get sign regex."""
     if sign == '-':
         rgx = '-?'
     elif sign == '+':
@@ -158,6 +187,7 @@ def get_sign(sign):
 
 
 def get_align(align, width, fill):
+    """Get alignment with fill regex."""
     rgx = ''
     if width and width > 0:
         rgx += '{}*'.format(escape(fill))
@@ -173,6 +203,7 @@ def get_align(align, width, fill):
 
 
 def get_left_point(grouping):
+    """Get regex for numbers left of decimal point."""
     if grouping is not None:
         rgx = r'\d?\d?\d(?:{}\d{{3}})*'.format(grouping)
     else:
@@ -181,6 +212,14 @@ def get_left_point(grouping):
 
 
 def parse(s: str, fmt: str):
+    """Parse string generated with format.
+
+    This simply use int() and float() to parse strings. Those are thrown off
+    when using fill characters (other than 0), or thousands groupings, so we
+    remove thoses from the string.
+
+    Parsing will fail when using the '-' fill character.
+    """
     params = extract_params(fmt)
     if params['type'] == 'd':
         return parse_d(s, params)

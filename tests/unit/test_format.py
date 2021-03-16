@@ -1,3 +1,15 @@
+"""Test regex generation from format string.
+
+Systematically generate formats, and test some number.
+To see what formats are tested, see the global variables:
+`signs`, `zeros`, `alts`, `aligns`, `grouping`, `widths`, `precisions`.
+To see what numbers are tested, see the global variables:
+`numbers_d`, `numbers_f`. (For float formats, both numbers list are tested)
+
+For each combination, generate expression from format, and string
+from number and format. Check that the regex match.
+Check that we parse correctly the number.
+"""
 
 import re
 
