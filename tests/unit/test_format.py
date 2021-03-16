@@ -12,7 +12,7 @@ numbers_f = [1.123, -3451.1209, 1e-8]
 
 def assert_format(string, fmt):
     pattern = xfmt.generate_expression(fmt)
-    m = re.match(pattern, string)
+    m = re.fullmatch(pattern, string)
     assert m is not None, \
         f"No match. Format '{fmt}'. Pattern '{pattern}'. String '{string}'"
 
