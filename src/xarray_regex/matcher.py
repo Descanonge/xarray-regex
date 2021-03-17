@@ -81,7 +81,11 @@ class Matcher():
         return '\n'.join([super().__repr__(), self.__str__()])
 
     def __str__(self):
-        return '{}: {}'.format(self.idx, self.match)
+        s = ''
+        if self.group:
+            s += self.group + ':'
+        s += '{}:{:d}'.format(self.name, self.idx)
+        return s
 
     def set_matcher(self, m: re.match):
         """Find attributes from match.
