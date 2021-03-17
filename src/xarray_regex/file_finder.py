@@ -444,7 +444,7 @@ class FileFinder():
             else:
                 files_matched.append((f, matches))
 
-        filelogs = files[::3]
+        filelogs = files[:3]
         if len(files) > 3:
             filelogs += ['...']
         log.debug("regex: %s, files:\n\t%s", self.regex, '\n\t'.join(filelogs))
