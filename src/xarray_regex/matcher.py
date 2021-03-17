@@ -112,14 +112,18 @@ class Matcher():
         self.group = group
         self.name = name
         self.discard = m.group('discard') is not None
+        self.fmt = 's'  # Default format
 
-        if name in self.DEFAULT_ELTS:
+        if name in self.DEFAULT_ELTS:  # Set new default if name is known
             self.rgx, self.fmt = self.DEFAULT_ELTS[name]
+            self.fmt = Format(self.fmt)
 
+        # Override defaults
         if rgx:
             self.rgx = rgx
         if fmt:
             self.fmt = Format(fmt)
+            # Override rgx if not in known names, or specified in pre-regex
             if not rgx and name not in self.DEFAULT_ELTS:
                 self.rgx = self.fmt.generate_expression()
 
