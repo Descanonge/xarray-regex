@@ -275,7 +275,7 @@ class FileFinder():
         filename = ''.join(segments)
         filename = re.sub(r'\\(.)', r'\1', filename)
 
-        return filename
+        return os.path.join(self.root, filename)
 
     def get_func_process_filename(self, func: Callable, relative: bool = True,
                                   *args, **kwargs) -> Callable:
