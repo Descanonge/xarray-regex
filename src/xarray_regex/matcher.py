@@ -6,9 +6,9 @@
 # at the root of this project. © 2021 Clément Haëck
 
 import re
-from .format import generate_expression
-
 from typing import Any
+
+from .format import Format
 
 
 class Matcher():
@@ -59,7 +59,7 @@ class Matcher():
 
     REGEX = (r"%\((?:(?P<group>[a-zA-Z]*):)?"
              r"(?P<name>[a-zA-Z]*)"
-             r"(:rgx=(?P<rgx>.*?))?"
+             r"(:(?:rgx|custom)=(?P<rgx>.*?))?"
              r"(:fmt=(?P<fmt>.*?))?"
              r"(?P<discard>:discard)?\)")
     """Regex to find matcher in pre-regex."""
@@ -71,6 +71,7 @@ class Matcher():
         self.rgx = None
         self.discard = False
         self.fmt = None
+        self.fmt_params = None
 
         self.match = m.group()[2:-1]  # slicing removes %()
 
@@ -114,12 +115,12 @@ class Matcher():
         if rgx:
             self.rgx = rgx
         if fmt:
-            self.fmt = fmt
+            self.fmt = Format(fmt)
             if not rgx and name not in self.DEFAULT_ELTS:
-                self.rgx = generate_expression(fmt)
+                self.rgx = self.fmt.generate_expression()
 
     def format(self, value: Any):
-        return '{{:{}}}'.format(self.fmt).format(value)
+        return self.fmt.format(value)
 
     def get_regex(self) -> str:
         """Get matcher regex.
