@@ -189,13 +189,6 @@ class FileFinder():
         self._fix_matcher(key, value, self.fixed_matchers)
         self.update_regex()
 
-    def _fix_matcher(self, key, value, fixed_matchers):
-        for m in self.get_matchers(key):
-            if isinstance(value, str):
-                fixed_matchers[m.idx] = value
-            else:
-                fixed_matchers[m.idx] = m.format(value)
-
     def fix_matchers(self, fixes: Dict[Union[int, str], str] = None):
         """Fix multiple values at once.
 
@@ -209,6 +202,13 @@ class FileFinder():
             fixes = {}
         for f in fixes.items():
             self.fix_matcher(*f)
+
+    def _fix_matcher(self, key, value, fixed_matchers):
+        for m in self.get_matchers(key):
+            if isinstance(value, str):
+                fixed_matchers[m.idx] = value
+            else:
+                fixed_matchers[m.idx] = m.format(value)
 
     def get_matches(self, filename: str,
                     relative: bool = True) -> Dict[str, Dict]:
