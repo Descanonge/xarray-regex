@@ -261,12 +261,33 @@ class FileFinder():
             })
         return matches
 
-    def get_filename(self, fixes) -> str:
+    def get_filename(self, fixes: Dict, relative: bool = False) -> str:
+        """Return a filename.
+
+        Replace matchers with provided values.
+        All matchers must be fixed prior, or with `fixes` argument.
+        Escaped characters in the pre-regex are de-escaped. Other regex syntax
+        won't be touched.
+
+        Parameters
+        ----------
+        fixes: dict
+            Dictionnary of fixes (matcher key: value). For details, see
+            :func:`fix_matcher`. Will (temporarily) supplant matcher fixed
+            prior.
+        relative: bool
+            If the filname should be relative to the finder root directory.
+            Defaults to False.
+        """
         fixed_matchers = self.fixed_matchers.copy()
         for key, value in fixes.items():
             self._fix_matcher(key, value, fixed_matchers)
 
-        if any(i not in fixed_matchers for i in range(self.n_matchers)):
+        non_fixed = [i for i in range(self.n_matchers)
+                     if i not in fixed_matchers]
+        if any(non_fixed):
+            log.error("Matchers not fixed: %s",
+                      ', '.join([str(self.matchers[i]) for i in non_fixed]))
             raise TypeError("Not all matchers were fixed.")
 
         segments = self.set_fixed_matchers_in_segments(
@@ -275,7 +296,10 @@ class FileFinder():
         filename = ''.join(segments)
         filename = re.sub(r'\\(.)', r'\1', filename)
 
-        return os.path.join(self.root, filename)
+        if not relative:
+            filename = os.path.join(self.root, filename)
+
+        return filename
 
     def get_func_process_filename(self, func: Callable, relative: bool = True,
                                   *args, **kwargs) -> Callable:
