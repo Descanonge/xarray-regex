@@ -215,6 +215,24 @@ class FileFinder():
         for f in fixes.items():
             self.fix_matcher(*f)
 
+    def unfix_matchers(self, *keys: str):
+        """Unfix matchers.
+
+        Parameters
+        ----------
+        keys: str
+           Keys to find matchers to unfix. See :func:`get_matchers`.
+           If no key is provided, all matchers will be unfixed.
+        """
+        if not keys:
+            self.fixed_matchers = {}
+        else:
+            for key in keys:
+                matchers = self.get_matchers(key)
+                for m in matchers:
+                    self.fixed_matchers.pop(m.idx, None)
+        self.update_regex()
+
     def get_matches(self, filename: str,
                     relative: bool = True,
                     parse: bool = True) -> Dict[str, Dict]:
