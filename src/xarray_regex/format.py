@@ -1,19 +1,19 @@
 """Generate regex from string format, and parse strings.
 
 Parameters of the format-string are retrieved.
-See `<https://docs.python.org/3/library/string.html#formatspec>`__ for the
-specification of the format mini-language.
+See `Format Mini Language Specification
+<https://docs.python.org/3/library/string.html#formatspec>`__.
 
 Thoses parameters are then used to generate a regular expression, or to parse
 a string formed from the format.
 
-Only 's', 'd', and 'f' formats are supported.
+Only 's', 'd', 'f', 'e' and 'E' formats types are supported.
 
 The width of the format string is not respected when matching with a regular
 expression.
 
 The parsing is quite naive and can fail on some cases.
-See :func:`parse` for details.
+See :func:`Format.parse` for details.
 
 The regex generation and parsing are tested in `tests/unit/test_format.py`.
 """
@@ -128,7 +128,9 @@ class Format:
         off when using fill characters (other than 0), or thousands groupings,
         so we remove thoses from the string.
 
-        Parsing will fail when using the '-' fill character.
+        Parsing will fail when using the '-' fill character on a negative
+        number, or when padding with zeros to the right. If you use such
+        formats, please contact to explain me why in the hell you do.
         """
         if self.type == 'd':
             return self.parse_d(s)

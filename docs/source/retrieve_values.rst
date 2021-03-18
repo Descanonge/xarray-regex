@@ -7,8 +7,13 @@ Retrieve information
 As some metadata might only be found in the filenames, FileFinder offer the
 possibility to retrieve it easily using the :func:`FileFinder.get_matches`
 method.
-Thus, a filename can be matched against the regex of the finder and returns a
-list of the matches found.
+This returns a list of dictionnaries containing the matcher, the match, and
+the start and end of the match in the filename string.
+Unless deactivated, if the matcher has a format specified, it will try to parse
+the string found.
+The list is ordered as the matchers in the pre-regex. To find a matcher index
+from its name, or group, see :func:`FileFinder.get_matchers` and
+:attr:`Matcher.idx<xarray_regex.matcher.Matcher.idx>`.
 
 The package supply the function :func:`library.get_date
 <xarray_regex.library.get_date>` to retrieve a datetime object from those
@@ -28,7 +33,7 @@ Retrieving information can be used when opening multiple files with
 
 :func:`FileFinder.get_func_process_filename` will turn a function into a
 suitable callable for the `preprocess` argument of `xarray.open_mfdataset`.
-The function should take an `xarray.Dataset`, a filename, and a
+The function should take an `xarray.Dataset`, a filename, a
 :class:`FileFinder`, and eventual additional arguments as input, and return
 an `xarray.Dataset`.
 This allows to use the finder and the dataset filename in the pre-processing.
@@ -39,7 +44,7 @@ find the timestamp::
     matches = finder.get_matches(filename)
     date = library.get_date(matches)
 
-    ds = ds.assign_coords(time=pd.to_datetime([value]))
+    ds = ds.assign_coords(time=pandas.to_datetime([value]))
     return ds
 
   ds = xr.open_mfdataset(finder.get_files(),

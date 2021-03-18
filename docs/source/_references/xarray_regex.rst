@@ -15,6 +15,8 @@ API
 
    file_finder
 
+   format
+
    library
 
    matcher
