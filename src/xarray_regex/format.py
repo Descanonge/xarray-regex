@@ -59,7 +59,7 @@ class Format:
         Format string.
     """
 
-    ALLOWED_TYPES = 'fds'
+    ALLOWED_TYPES = 'fdeEs'
     RGX_ESCAPE = '+*?[]()^$|.'
 
     def __init__(self, fmt: str):
@@ -84,7 +84,7 @@ class Format:
 
     def set_defaults(self):
         """Set parameters defaults values."""
-        if self.type in 'df':
+        if self.type in 'dfeE':
             defaults = dict(
                 align='>',
                 fill=' ',
@@ -114,6 +114,8 @@ class Format:
             return self.generate_expression_d()
         if self.type == 's':
             return self.generate_expression_s()
+        if self.type in 'eE':
+            return self.generate_expression_e()
 
     def parse(self, s: str) -> Union[str, int, float]:
         """Parse string generated with format.
@@ -126,7 +128,7 @@ class Format:
         """
         if self.type == 'd':
             return self.parse_d(s)
-        if self.type == 'f':
+        if self.type in 'feE':
             return self.parse_f(s)
         if self.type == 's':
             return s
@@ -174,13 +176,28 @@ class Format:
             rgx += align
 
         rgx += self.get_left_point()
+        rgx += self.get_right_point()
 
-        precision = self.precision
-        if precision == '':
-            precision = 6
-        if precision != 0 or self.alternate:
-            rgx += r'\.'
-        rgx += r'\d{{{:d}}}'.format(precision)
+        if loc in ['right', 'center']:
+            rgx += align
+
+        return rgx
+
+    def generate_expression_e(self) -> str:
+        rgx = ''
+        align, loc = self.get_align()
+
+        if loc in ['left', 'center']:
+            rgx += align
+
+        rgx += self.get_sign()
+
+        if loc == 'middle':
+            rgx += align
+
+        rgx += r'\d'
+        rgx += self.get_right_point()
+        rgx += r'{}[+-]\d+?\d'.format(self.type)
 
         if loc in ['right', 'center']:
             rgx += align
@@ -220,6 +237,14 @@ class Format:
             rgx = r'\d?\d?\d(?:{}\d{{3}})*'.format(self.grouping)
         else:
             rgx = r'\d*'
+        return rgx
+
+    def get_right_point(self) -> str:
+        rgx = ''
+        if self.precision != 0 or self.alternate:
+            rgx += r'\.'
+        if self.precision != 0:
+            rgx += r'\d{{{:d}}}'.format(self.precision)
         return rgx
 
     def parse_d(self, s: str) -> int:
