@@ -209,9 +209,9 @@ class Format:
         if self.sign == '-':
             rgx = '-?'
         elif self.sign == '+':
-            rgx = r'(?:\+|-)'
+            rgx = r'[+-]'
         elif self.sign == ' ':
-            rgx = r'(?:\s|-)'
+            rgx = r'[\s-]'
         else:
             raise KeyError("Sign not in {+- }")
         return rgx
