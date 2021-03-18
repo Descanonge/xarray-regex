@@ -112,7 +112,7 @@ class Matcher():
         self.group = group
         self.name = name
         self.discard = m.group('discard') is not None
-        self.fmt = 's'  # Default format
+        self.fmt = None
 
         if name in self.DEFAULT_ELTS:  # Set new default if name is known
             self.rgx, self.fmt = self.DEFAULT_ELTS[name]
