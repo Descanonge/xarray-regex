@@ -274,7 +274,8 @@ class FileFinder():
             })
         return matches
 
-    def get_filename(self, fixes: Dict, relative: bool = False) -> str:
+    def get_filename(self, fixes: Dict, relative: bool = False,
+                     **kw_fixes: Any) -> str:
         """Return a filename.
 
         Replace matchers with provided values.
@@ -289,6 +290,8 @@ class FileFinder():
         relative: bool
             If the filename should be relative to the finder root directory.
             Defaults to False.
+        kw_fixes:
+            Same as fixes. Takes precedence.
 
         Raises
         ------
@@ -299,6 +302,7 @@ class FileFinder():
                              "is present outside matchers.")
 
         fixed_matchers = self.fixed_matchers.copy()
+        fixes.update(kw_fixes)
         for key, value in fixes.items():
             for m in self.get_matchers(key):
                 fixed_matchers[m.idx] = value
