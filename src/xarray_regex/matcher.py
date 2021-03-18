@@ -52,7 +52,7 @@ class Matcher():
         "X": [r"%H%M%S", '06d'],
         "F": [r"%Y-%m-%d", 's'],
         "B": [r"[a-zA-Z]*", 's'],
-        "text": [r"[a-zA-Z]*", 's'],
+        "text": [r'\w', 's'],
         "char": [r"\S*", 's']
     }
     """Regex str for each type of element."""
