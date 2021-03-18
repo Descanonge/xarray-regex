@@ -18,6 +18,11 @@ See :func:`parse` for details.
 The regex generation and parsing are tested in `tests/unit/test_format.py`.
 """
 
+# This file is part of the 'xarray-regex' project
+# (http://github.com/Descanonge/xarray-regex) and subject
+# to the MIT License as defined in the file 'LICENSE',
+# at the root of this project. © 2021 Clément Haëck
+
 import re
 from typing import Any, Tuple, Union
 

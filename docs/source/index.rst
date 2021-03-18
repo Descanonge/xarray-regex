@@ -12,9 +12,9 @@ Welcome to the Xarray-regex package documentation !
 
 Xarray-regex allows to find files based on regular expressions, in order to feed
 them to Xarray.
-It allows to easily create regular expressions using 'Matchers', to fix some
-elements of the expressions to select only certain files, and to easily
-retrieve information from filenames.
+It allows to easily create regular expressions, to fix some elements of the
+expressions to select only certain files, and to easily retrieve information
+from filenames.
 
 .. toctree::
    :maxdepth: 3
