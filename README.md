@@ -23,30 +23,26 @@ The package also allows to interface easily with `xarray.open_mfdataset`.
 
 # Quick examples
 
-The following example will find all files with the structure ``Data/[month]/Temperature_[depth]_[date].nc``::
-
+The following example will find all files with the structure ``Data/[month]/Temperature_[depth]_[date].nc``:
 ``` python
 finder = FileFinder('/.../Data', '%(m)/Temperature_%(depth:fmt=d)_%(Y)%(m)%(d).nc')
 print(finder.get_files())
 ```
 
-We can also only select some files, for instance the first day of each month::
-
+We can also only select some files, for instance the first day of each month:
 ``` python
 finder.fix_matcher('d', 1)
 print(finder.get_files())
 ```
 
-We can retrieve values from found files::
-
+We can retrieve values from found files:
 ``` python
 matches = get_matches(finder.get_files()[0], relative=False)
 print(matches)
 print(xarray_regex.library.get_date(matches))
 ```
 
-And we can generate a filename with a set of parameters::
-
+And we can generate a filename with a set of parameters:
 ``` python
 finder.get_filename(depth=100, Y=2000, m=1, d=1)
 # Specifying the day is optional since we already fixed it to 1.
