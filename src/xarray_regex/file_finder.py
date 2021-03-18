@@ -48,7 +48,7 @@ class FileFinder():
         Regex obtained from the pre-regex.
     use_regex: bool
         Characters outside of matcher are considered as valid regex (and not
-        escaped).
+        escaped) if true.
     pattern: re.pattern
     subpatterns: list of re.pattern
         Compiled patterns for each directory obtained from the regex.
@@ -191,6 +191,7 @@ class FileFinder():
             Will replace the match for all files. Can be a string, or a value
             that will be formatted using the matcher format string.
             A list of values will be joined by the regex '|' OR.
+            Special characters should be properly escaped in strings.
 
         Raises
         ------
@@ -284,7 +285,7 @@ class FileFinder():
         fixes: dict
             Dictionnary of fixes (matcher key: value). For details, see
             :func:`fix_matcher`. Will (temporarily) supplant matcher fixed
-            prior.
+            prior. If prior fix is a list, first item will be used.
         relative: bool
             If the filename should be relative to the finder root directory.
             Defaults to False.
@@ -302,7 +303,14 @@ class FileFinder():
             raise TypeError("Not all matchers were fixed.")
 
         segments = self.segments.copy()
-        self.set_segments_to_fixes(segments, fixed_matchers, True)
+
+        for idx, value in fixed_matchers.items():
+            if isinstance(value, (list, tuple)):
+                value = value[0]
+            if not isinstance(value, str):
+                value = self.matchers[idx].format(value)
+            segments[2*idx+1] = value
+
         filename = ''.join(segments)
 
         if not relative:
@@ -405,7 +413,13 @@ class FileFinder():
                 # Escape outside matchers
                 segments[i] = s if i % 2 == 1 else re.escape(s)
 
-        self.set_segments_to_fixes(segments, self.fixed_matchers)
+        for idx, value in self.fixed_matchers.items():
+            if not isinstance(value, (list, tuple)):
+                value = [value]
+            value = [v if isinstance(v, str)
+                     else re.escape(self.matchers[idx].format(v))
+                     for v in value]
+            segments[2*idx+1] = '({})'.format('|'.join(value))
 
         self.regex = ''.join(segments)
         self.pattern = re.compile(self.regex)
@@ -513,20 +527,3 @@ class FileFinder():
             return selected
 
         raise TypeError("Key must be int, str or list of int")
-
-    def set_segments_to_fixes(self, segments: List[str],
-                              fixed_matchers: Dict[int, Any],
-                              filename: bool = False):
-        for idx, value in fixed_matchers.items():
-            if not isinstance(value, (list, tuple)):
-                value = [value]
-            if filename:
-                value = value[0]
-                if not isinstance(value, str):
-                    value = self.matchers[idx].format(value)
-            else:
-                value = [v if isinstance(v, str)
-                         else re.escape(self.matchers[idx].format(v))
-                         for v in value]
-                value = '({})'.format('|'.join(value))
-            segments[2*idx+1] = value
