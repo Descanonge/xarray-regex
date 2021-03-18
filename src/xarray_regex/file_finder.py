@@ -32,9 +32,8 @@ class FileFinder():
         Only the matchers vary from file to file. See documentation
         for details.
     use_regex: bool
-        If False (default), special regex characters in the pre-regex (outside
-        of matchers) will be escaped. Should be enabled to use regex outside
-        of matchers.
+        Characters outside of matcher are considered as valid regex (and not
+        escaped).
     replacements : str, optional
         Matchers to replace by a string:
         `'matcher name' = 'replacement string'`.
@@ -47,6 +46,9 @@ class FileFinder():
         Pre-regex.
     regex: str
         Regex obtained from the pre-regex.
+    use_regex: bool
+        Characters outside of matcher are considered as valid regex (and not
+        escaped).
     pattern: re.pattern
     subpatterns: list of re.pattern
         Compiled patterns for each directory obtained from the regex.
@@ -76,6 +78,7 @@ class FileFinder():
 
         self.pregex = ''
         self.regex = ''
+        self.use_regex = use_regex
         self.pattern = None
         self.subpatterns = []
         self.matchers = []
@@ -85,7 +88,7 @@ class FileFinder():
         self.scanned = False
 
         self.set_pregex(pregex, **replacements)
-        self.create_regex(use_regex)
+        self.create_regex()
 
     @property
     def n_matchers(self) -> int:
@@ -193,7 +196,8 @@ class FileFinder():
         ------
         TypeError: key is neither int nor str.
         """
-        self._fix_matcher(key, value, self.fixed_matchers)
+        for m in self.get_matchers(key):
+            self.fixed_matchers[m.idx] = value
         self.update_regex()
 
     def fix_matchers(self, fixes: Dict[Union[int, str], Any] = None):
@@ -209,14 +213,6 @@ class FileFinder():
             fixes = {}
         for f in fixes.items():
             self.fix_matcher(*f)
-
-    def _fix_matcher(self, key, value, fixed_matchers):
-        for m in self.get_matchers(key):
-            if not isinstance(value, (list, tuple)):
-                value = [value]
-            fixes = [v if isinstance(v, str) else re.escape(m.format(v))
-                     for v in value]
-            self.fixed_matchers[m.idx] = '|'.join(fixes)
 
     def get_matches(self, filename: str,
                     relative: bool = True,
@@ -282,8 +278,6 @@ class FileFinder():
 
         Replace matchers with provided values.
         All matchers must be fixed prior, or with `fixes` argument.
-        Escaped characters in the pre-regex are de-escaped. Other regex syntax
-        won't be touched.
 
         Parameters
         ----------
@@ -292,12 +286,13 @@ class FileFinder():
             :func:`fix_matcher`. Will (temporarily) supplant matcher fixed
             prior.
         relative: bool
-            If the filname should be relative to the finder root directory.
+            If the filename should be relative to the finder root directory.
             Defaults to False.
         """
         fixed_matchers = self.fixed_matchers.copy()
         for key, value in fixes.items():
-            self._fix_matcher(key, value, fixed_matchers)
+            for m in self.get_matchers(key):
+                fixed_matchers[m.idx] = value
 
         non_fixed = [i for i in range(self.n_matchers)
                      if i not in fixed_matchers]
@@ -306,11 +301,9 @@ class FileFinder():
                       ', '.join([str(self.matchers[i]) for i in non_fixed]))
             raise TypeError("Not all matchers were fixed.")
 
-        segments = self.set_fixed_matchers_in_segments(
-            self.segments.copy(), fixed_matchers, False)
-
+        segments = self.segments.copy()
+        self.set_segments_to_fixes(segments, fixed_matchers, True)
         filename = ''.join(segments)
-        filename = re.sub(r'\\(.)', r'\1', filename)
 
         if not relative:
             filename = os.path.join(self.root, filename)
@@ -378,12 +371,12 @@ class FileFinder():
             pregex = pregex.replace("%({:s})".format(k), z)
         self.pregex = pregex
 
-    def create_regex(self, use_regex: bool):
+    def create_regex(self):
         """Create regex from pre-regex. """
-        self.scan_pregex(use_regex)
+        self.scan_pregex()
         self.update_regex()
 
-    def scan_pregex(self, use_regex: bool):
+    def scan_pregex(self):
         """Scan pregex for matchers.
 
         Add matchers objects to self.
@@ -397,9 +390,6 @@ class FileFinder():
         self.segments = [self.pregex[i:j]
                          for i, j in zip(splits, splits[1:]+[None])]
 
-        if not use_regex:
-            self.segments = [re.escape(s) for s in self.segments]
-
         # Replace matcher by its regex
         for idx, m in enumerate(self.matchers):
             self.segments[2*idx+1] = '({})'.format(m.get_regex())
@@ -409,29 +399,20 @@ class FileFinder():
 
         Set fixed matchers. Re-compile pattern. Scrap previous scanning.
         """
-        self.set_fixed_matchers_in_segments()
-        self.regex = ''.join(self.segments)
+        segments = self.segments.copy()
+        if not self.use_regex:
+            for i, s in enumerate(segments):
+                # Escape outside matchers
+                segments[i] = s if i % 2 == 1 else re.escape(s)
+
+        self.set_segments_to_fixes(segments, self.fixed_matchers)
+
+        self.regex = ''.join(segments)
         self.pattern = re.compile(self.regex)
         self.subpatterns = [re.compile(rgx)
                             for rgx in self.regex.split(os.path.sep)]
         self.scanned = False
         self.files = []
-
-    def set_fixed_matchers_in_segments(
-            self, segments: List[str] = None,
-            fixed_matchers: Dict[int, str] = None,
-            capture: bool = True) -> List[str]:
-
-        if segments is None:
-            segments = self.segments
-        if fixed_matchers is None:
-            fixed_matchers = self.fixed_matchers
-        for idx, value in fixed_matchers.items():
-            if capture:
-                segments[2*idx+1] = '({})'.format(value)
-            else:
-                segments[2*idx+1] = value
-        return segments
 
     def find_files(self):
         """Find files to scan.
@@ -532,3 +513,20 @@ class FileFinder():
             return selected
 
         raise TypeError("Key must be int, str or list of int")
+
+    def set_segments_to_fixes(self, segments: List[str],
+                              fixed_matchers: Dict[int, Any],
+                              filename: bool = False):
+        for idx, value in fixed_matchers.items():
+            if not isinstance(value, (list, tuple)):
+                value = [value]
+            if filename:
+                value = value[0]
+                if not isinstance(value, str):
+                    value = self.matchers[idx].format(value)
+            else:
+                value = [v if isinstance(v, str)
+                         else re.escape(self.matchers[idx].format(v))
+                         for v in value]
+                value = '({})'.format('|'.join(value))
+            segments[2*idx+1] = value
