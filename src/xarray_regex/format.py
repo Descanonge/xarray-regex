@@ -236,7 +236,7 @@ class Format:
         if self.grouping is not None:
             rgx = r'\d?\d?\d(?:{}\d{{3}})*'.format(self.grouping)
         else:
-            rgx = r'\d*'
+            rgx = r'\d+'
         return rgx
 
     def get_right_point(self) -> str:
