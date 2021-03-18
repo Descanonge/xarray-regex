@@ -9,7 +9,7 @@ import os
 import logging
 import re
 
-from typing import Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Union
 
 from xarray_regex.matcher import Matcher
 
@@ -121,9 +121,9 @@ class FileFinder():
             root directory. If not, filenames are absolute. Defaults to False.
         nested : list of str
             If not None, return nested list of filenames with each level
-            corresponding to a group in this argument. Last group in the list is
-            at the innermost level. A level specified as None refer to matchers
-            without a group.
+            corresponding to a group in this argument. Last group in the list
+            is at the innermost level. A level specified as None refer to
+            matchers without a group.
 
         Raises
         ------
@@ -168,7 +168,7 @@ class FileFinder():
 
         return files
 
-    def fix_matcher(self, key: Union[int, str], value: str):
+    def fix_matcher(self, key: Union[int, str], value: Union[Any, List[Any]]):
         """Fix a matcher to a string.
 
         Parameters
@@ -179,8 +179,10 @@ class FileFinder():
             the syntax 'group:name'.
             When using strings, if multiple matchers are found with the same
             name or group/name combination, all are fixed to the same value.
-        value :
-            Will replace the match for all files.
+        value : str or value, or list of
+            Will replace the match for all files. Can be a string, or a value
+            that will be formatted using the matcher format string.
+            A list of values will be joined by the regex '|' OR.
 
         Raises
         ------
@@ -189,7 +191,7 @@ class FileFinder():
         self._fix_matcher(key, value, self.fixed_matchers)
         self.update_regex()
 
-    def fix_matchers(self, fixes: Dict[Union[int, str], str] = None):
+    def fix_matchers(self, fixes: Dict[Union[int, str], Any] = None):
         """Fix multiple values at once.
 
         Parameters
@@ -205,10 +207,11 @@ class FileFinder():
 
     def _fix_matcher(self, key, value, fixed_matchers):
         for m in self.get_matchers(key):
-            if isinstance(value, str):
-                fixed_matchers[m.idx] = value
-            else:
-                fixed_matchers[m.idx] = m.format(value)
+            if not isinstance(value, (list, tuple)):
+                value = [value]
+            fixes = [v if isinstance(v, str) else re.escape(m.format(v))
+                     for v in value]
+            self.fixed_matchers[m.idx] = '|'.join(fixes)
 
     def get_matches(self, filename: str,
                     relative: bool = True) -> Dict[str, Dict]:
@@ -305,9 +308,9 @@ class FileFinder():
                                   *args, **kwargs) -> Callable:
         r"""Get a function that can preprocess a dataset.
 
-        Written to be used as the 'process' argument of `xarray.open_mfdataset`.
-        Allows to use a function with additional arguments, that can retrieve
-        information from the filename.
+        Written to be used as the 'process' argument of
+        `xarray.open_mfdataset`. Allows to use a function with additional
+        arguments, that can retrieve information from the filename.
 
         Parameters
         ----------
