@@ -60,7 +60,6 @@ class Format:
     """
 
     ALLOWED_TYPES = 'fdeEs'
-    RGX_ESCAPE = '+*?[]()^$|.'
 
     def __init__(self, fmt: str):
         self.fmt = fmt
@@ -133,15 +132,6 @@ class Format:
         if self.type == 's':
             return s
 
-    @classmethod
-    def escape(cls, char: str) -> str:
-        """Escape special regex characters."""
-        if len(char) > 1:
-            raise IndexError("String to escape longer than one character")
-        if char in cls.RGX_ESCAPE:
-            return r'\{}'.format(char)
-        return char
-
     def generate_expression_s(self) -> str:
         return '.*?'
 
@@ -195,7 +185,7 @@ class Format:
         """Get alignment with fill regex and its location."""
         rgx = ''
         if self.width > 0:
-            rgx += '{}*'.format(self.escape(self.fill))
+            rgx += '{}*'.format(re.escape(self.fill))
 
         loc = {
             '=': 'middle',
@@ -239,6 +229,6 @@ class Format:
         """
         to_remove = [',', '_']  # Any grouping char
         if self.fill != '0':
-            to_remove.append(self.escape(self.fill))
+            to_remove.append(re.escape(self.fill))
         pattern = '[{}]'.format(''.join(to_remove))
         return re.sub(pattern, '', s)
