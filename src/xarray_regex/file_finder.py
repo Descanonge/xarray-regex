@@ -219,19 +219,23 @@ class FileFinder():
             self.fixed_matchers[m.idx] = '|'.join(fixes)
 
     def get_matches(self, filename: str,
-                    relative: bool = True) -> Dict[str, Dict]:
+                    relative: bool = True,
+                    parse: bool = True) -> Dict[str, Dict]:
         """Get matches for a given filename.
 
         Apply regex to `filename` and return a dictionary of the results.
 
         Parameters
         ----------
-        filename:
+        filename: str
             Filename to retrieve matches from.
-        relative:
+        relative: bool
             Is true if the filename is relative to the finder root directory.
             If false, the filename is made relative before being matched.
             Default to true.
+        parse: bool
+            If true (default), parse the result for which the matcher has a
+            format specified.
 
         Returns
         -------
@@ -261,11 +265,15 @@ class FileFinder():
         matches = []
         for i in range(self.n_matchers):
             matcher = self.matchers[i]
+            value = m.group(i+1)
+            if parse and matcher.fmt is not None:
+                value = matcher.fmt.parse(value)
+
             matches.append({
-                'match': m.group(i+1),
+                'matcher': matcher,
+                'match': value,
                 'start': m.start(i+1),
-                'end': m.end(i+1),
-                'matcher': matcher
+                'end': m.end(i+1)
             })
         return matches
 
