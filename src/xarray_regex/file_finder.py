@@ -289,7 +289,15 @@ class FileFinder():
         relative: bool
             If the filename should be relative to the finder root directory.
             Defaults to False.
+
+        Raises
+        ------
+        ValueError: use_regex is activated.
         """
+        if self.use_regex:
+            raise ValueError("Cannot generate a valid filename if regex "
+                             "is present outside matchers.")
+
         fixed_matchers = self.fixed_matchers.copy()
         for key, value in fixes.items():
             for m in self.get_matchers(key):
