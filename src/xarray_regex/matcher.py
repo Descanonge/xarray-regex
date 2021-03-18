@@ -57,8 +57,8 @@ class Matcher():
     }
     """Regex str for each type of element."""
 
-    REGEX = (r"%\((?:(?P<group>[a-zA-Z]*):)?"
-             r"(?P<name>[a-zA-Z]*)"
+    REGEX = (r"%\((?:(?P<group>\w*):)?"
+             r"(?P<name>\w*)"
              r"(:fmt=(?P<fmt>.*?))?"
              r"(:(?:rgx|custom)=(?P<rgx>.*?))?"
              r"(?P<discard>:discard)?\)")
