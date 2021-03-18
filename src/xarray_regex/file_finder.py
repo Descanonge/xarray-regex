@@ -31,6 +31,10 @@ class FileFinder():
         The pre-regex. A regular expression with added 'Matchers'.
         Only the matchers vary from file to file. See documentation
         for details.
+    use_regex: bool
+        If False (default), special regex characters in the pre-regex (outside
+        of matchers) will be escaped. Should be enabled to use regex outside
+        of matchers.
     replacements : str, optional
         Matchers to replace by a string:
         `'matcher name' = 'replacement string'`.
@@ -61,7 +65,8 @@ class FileFinder():
         If the finder has scanned files.
     """
 
-    def __init__(self, root: str, pregex: str, **replacements: str):
+    def __init__(self, root: str, pregex: str, use_regex: bool = False,
+                 **replacements: str):
 
         if isinstance(root, (list, tuple)):
             root = os.path.join(*root)
@@ -80,7 +85,7 @@ class FileFinder():
         self.scanned = False
 
         self.set_pregex(pregex, **replacements)
-        self.create_regex()
+        self.create_regex(use_regex)
 
     @property
     def n_matchers(self) -> int:
@@ -365,12 +370,12 @@ class FileFinder():
             pregex = pregex.replace("%({:s})".format(k), z)
         self.pregex = pregex
 
-    def create_regex(self):
+    def create_regex(self, use_regex: bool):
         """Create regex from pre-regex. """
-        self.scan_pregex()
+        self.scan_pregex(use_regex)
         self.update_regex()
 
-    def scan_pregex(self):
+    def scan_pregex(self, use_regex: bool):
         """Scan pregex for matchers.
 
         Add matchers objects to self.
@@ -383,6 +388,9 @@ class FileFinder():
             splits += [m.start(), m.end()]
         self.segments = [self.pregex[i:j]
                          for i, j in zip(splits, splits[1:]+[None])]
+
+        if not use_regex:
+            self.segments = [re.escape(s) for s in self.segments]
 
         # Replace matcher by its regex
         for idx, m in enumerate(self.matchers):
