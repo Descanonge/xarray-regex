@@ -59,8 +59,8 @@ class Matcher():
 
     REGEX = (r"%\((?:(?P<group>[a-zA-Z]*):)?"
              r"(?P<name>[a-zA-Z]*)"
-             r"(:(?:rgx|custom)=(?P<rgx>.*?))?"
              r"(:fmt=(?P<fmt>.*?))?"
+             r"(:(?:rgx|custom)=(?P<rgx>.*?))?"
              r"(?P<discard>:discard)?\)")
     """Regex to find matcher in pre-regex."""
 
