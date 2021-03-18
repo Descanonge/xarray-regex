@@ -146,63 +146,38 @@ class Format:
         return '.*?'
 
     def generate_expression_d(self) -> str:
-        rgx = ''
-        align, loc = self.get_align()
-        if loc in ['left', 'center']:
-            rgx += align
-
-        rgx += self.get_sign()
-
-        if loc == 'middle':
-            rgx += align
-
-        rgx += self.get_left_point()
-
-        if loc in ['right', 'center']:
-            rgx += align
-
-        return rgx
+        rgx = self.get_left_point()
+        return self.insert_in_alignement(rgx)
 
     def generate_expression_f(self) -> str:
-        rgx = ''
-        align, loc = self.get_align()
-
-        if loc in ['left', 'center']:
-            rgx += align
-
-        rgx += self.get_sign()
-
-        if loc == 'middle':
-            rgx += align
-
-        rgx += self.get_left_point()
+        rgx = self.get_left_point()
         rgx += self.get_right_point()
-
-        if loc in ['right', 'center']:
-            rgx += align
-
-        return rgx
+        return self.insert_in_alignement(rgx)
 
     def generate_expression_e(self) -> str:
-        rgx = ''
-        align, loc = self.get_align()
-
-        if loc in ['left', 'center']:
-            rgx += align
-
-        rgx += self.get_sign()
-
-        if loc == 'middle':
-            rgx += align
-
-        rgx += r'\d'
+        rgx = r'\d'
         rgx += self.get_right_point()
         rgx += r'{}[+-]\d+?\d'.format(self.type)
+        return self.insert_in_alignement(rgx)
+
+    def insert_in_alignement(self, rgx: str) -> str:
+        align, loc = self.get_align()
+        out_rgx = ''
+
+        if loc in ['left', 'center']:
+            out_rgx += align
+
+        out_rgx += self.get_sign()
+
+        if loc == 'middle':
+            out_rgx += align
+
+        out_rgx += rgx
 
         if loc in ['right', 'center']:
-            rgx += align
+            out_rgx += align
 
-        return rgx
+        return out_rgx
 
     def get_sign(self) -> str:
         """Get sign regex."""
