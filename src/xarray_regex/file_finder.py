@@ -292,7 +292,7 @@ class FileFinder():
             })
         return matches
 
-    def get_filename(self, fixes: Dict, relative: bool = False,
+    def get_filename(self, fixes: Dict = None, relative: bool = False,
                      **kw_fixes: Any) -> str:
         """Return a filename.
 
@@ -320,6 +320,8 @@ class FileFinder():
                              "is present outside matchers.")
 
         fixed_matchers = self.fixed_matchers.copy()
+        if fixes is None:
+            fixes = {}
         fixes.update(kw_fixes)
         for key, value in fixes.items():
             for m in self.get_matchers(key):
