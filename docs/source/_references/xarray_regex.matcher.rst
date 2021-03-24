@@ -1,19 +1,39 @@
 
 
-xarray\_regex.file\_finder
-==========================
+xarray\_regex.matcher
+=====================
 
-.. automodule:: xarray_regex.file_finder
+.. automodule:: xarray_regex.matcher
 
 .. rubric:: Classes
 .. autosummary::
 
-   FileFinder
+   Matcher
+
+   Match
+
+   Matches
+
+   get_matchers_indices
 
 
-.. autoclass:: FileFinder
-    :show-inheritance:
+.. autoclass:: Matcher
     :members:
     :private-members:
     :special-members:
     :exclude-members: __repr__, __str__, __init__, __weakref__
+
+.. autoclass:: Match
+    :members:
+    :private-members:
+    :special-members:
+    :exclude-members: __repr__, __str__, __init__, __weakref__
+
+.. autoclass:: Matches
+    :members:
+    :private-members:
+    :special-members:
+    :exclude-members: __repr__, __str__, __init__, __weakref__
+
+
+.. autofunction:: get_matchers_indices

@@ -61,8 +61,9 @@ class FileFinder():
     fixed_matchers: dict
         Dictionnary of matchers with a set value.
         'matcher index': 'replacement string'
-    files: list of str
-        List of scanned files.
+    files: list of tuples
+        List of tuples containing the filename relative to the root,
+        and a list of matches.
     scanned: bool
         If the finder has scanned files.
     """
@@ -119,12 +120,14 @@ class FileFinder():
 
         Lazily scan files: if files were already scanned, just return
         the stored list of files.
+        Scanned files are flushed if the regex is changed (by fixing matcher
+        for instance).
 
         Parameters
         ----------
         relative : bool
             If True, filenames are returned relative to the finder
-            root directory. If not, filenames are absolute. Defaults to False.
+            root directory. If not, paths are absolute. Defaults to False.
         nested : list of str
             If not None, return nested list of filenames with each level
             corresponding to a group in this argument. Last group in the list
@@ -190,10 +193,6 @@ class FileFinder():
             that will be formatted using the matcher format string.
             A list of values will be joined by the regex '|' OR.
             Special characters should be properly escaped in strings.
-
-        Raises
-        ------
-        TypeError: key is neither int nor str.
         """
         for m in self.get_matchers(key):
             self.fixed_matchers[m.idx] = value
@@ -234,8 +233,7 @@ class FileFinder():
         self.update_regex()
 
     def get_matches(self, filename: str,
-                    relative: bool = True,
-                    parse: bool = True) -> Dict[str, Dict]:
+                    relative: bool = True) -> Dict[str, Dict]:
         """Get matches for a given filename.
 
         Apply regex to `filename` and return a dictionary of the results.
@@ -248,9 +246,6 @@ class FileFinder():
             Is true if the filename is relative to the finder root directory.
             If false, the filename is made relative before being matched.
             Default to true.
-        parse: bool
-            If true (default), parse the result for which the matcher has a
-            format specified.
 
         Returns
         -------
@@ -510,10 +505,15 @@ class FileFinder():
             Can be matcher index, name, or group+name combination with the
             syntax: 'group:name'.
 
+        Returns
+        -------
+        List of matchers corresponding to key.
+
         Raises
         ------
         KeyError: No matcher found.
         TypeError: Key type is not valid.
         """
         selected = get_matchers_indices(self.matchers, key)
-        return [self.matchers[i] for i in selected]
+        matchers = [self.matchers[i] for i in selected]
+        return matchers

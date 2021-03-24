@@ -1,18 +1,17 @@
 
 
-xarray\_regex.matcher
-=====================
+xarray\_regex.file\_finder
+==========================
 
-.. automodule:: xarray_regex.matcher
+.. automodule:: xarray_regex.file_finder
 
 .. rubric:: Classes
 .. autosummary::
 
-   Matcher
+   FileFinder
 
 
-.. autoclass:: Matcher
-    :show-inheritance:
+.. autoclass:: FileFinder
     :members:
     :private-members:
     :special-members:

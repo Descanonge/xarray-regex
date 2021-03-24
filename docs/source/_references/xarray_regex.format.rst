@@ -12,7 +12,6 @@ xarray\_regex.format
 
 
 .. autoclass:: Format
-    :show-inheritance:
     :members:
     :private-members:
     :special-members:

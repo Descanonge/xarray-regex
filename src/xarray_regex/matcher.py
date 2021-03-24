@@ -1,4 +1,4 @@
-"""Matcher object."""
+"""Matches management."""
 
 # This file is part of the 'xarray-regex' project
 # (http://github.com/Descanonge/xarray-regex) and subject
@@ -20,7 +20,7 @@ class Matcher():
 
     Parameters
     ----------
-    m: re.match
+    m: re.Match
         Match object obtained to find matchers in the pre-regex.
     idx: int
         Index inside the pre-regex.
@@ -68,7 +68,7 @@ class Matcher():
              r"(?P<discard>:discard)?\)")
     """Regex to find matcher in pre-regex."""
 
-    def __init__(self, m: re.match, idx: int = 0):
+    def __init__(self, m: re.Match, idx: int = 0):
         self.idx = idx
         self.group = None
         self.name = None
@@ -89,7 +89,7 @@ class Matcher():
         s += '{}:{:d}'.format(self.name, self.idx)
         return s
 
-    def set_matcher(self, m: re.match):
+    def set_matcher(self, m: re.Match):
         """Find attributes from match.
 
         Raises
@@ -160,13 +160,9 @@ class Matcher():
 
 
 class Match:
-    """Match extract from a filename.
+    """Match extract from a filename."""
 
-    Parameters
-    ----------
-    """
-
-    def __init__(self, matcher: Matcher, match: re.match, group: int):
+    def __init__(self, matcher: Matcher, match: re.Match, group: int):
         self.matcher = matcher
         self.match_str = match.group(group+1)
         self.start = match.start(group+1)
@@ -186,6 +182,11 @@ class Match:
         return str(self.matcher) + ' = {}'.format(self.match_str)
 
     def get_match(self, parsed: bool = True):
+        """Get match string or value.
+
+        If `parsed` is true, and the parsing was successful, return the
+        parsed value instead of the matched string.
+        """
         if parsed and self.match_parsed is not None:
             return self.match_parsed
         return self.match_str
@@ -227,7 +228,18 @@ class Matches:
     def __iter__(self):
         return iter(self.matches)
 
-    def get_matches(self, key: Union[int, str]):
+    def get_matches(self, key: Union[int, str]) -> Union[Match, List[Match]]:
+        """Get matches corresponding to key.
+
+        See :func:`FileFinder.get_matchers
+        <xarray_regex.file_finder.FileFinder.get_matchers>` for details on
+        `key` argument.
+
+        Returns
+        -------
+        List of Match corresponding to the key. If only one Match corresponds,
+        return it directly.
+        """
         selected = get_matchers_indices(self.matchers, key)
         return [self.matches[k] for k in selected]
 
