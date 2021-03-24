@@ -40,7 +40,7 @@ class Matcher():
     """
 
     DEFAULT_ELTS = {
-        "idx": [r"\d+", 'd'],
+        "I": [r"\d+", 'd'],
         "Y": [r"\d{4}", '04d'],
         "m": [r"\d\d", '02d'],
         "d": [r"\d\d", '02d'],
