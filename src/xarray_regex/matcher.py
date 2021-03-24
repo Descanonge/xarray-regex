@@ -241,7 +241,10 @@ class Matches:
         return it directly.
         """
         selected = get_matchers_indices(self.matchers, key)
-        return [self.matches[k] for k in selected]
+        matches = [self.matches[k] for k in selected]
+        if len(matches) == 1:
+            return matches[0]
+        return matches
 
 
 def get_matchers_indices(matchers: List[Matcher],
