@@ -84,7 +84,8 @@ class FileFinder():
         self.scanned = False
 
         self.set_pregex(pregex, **replacements)
-        self.create_regex()
+        self.scan_pregex()
+        self.update_regex()
 
     @property
     def n_matchers(self) -> int:
@@ -406,11 +407,6 @@ class FileFinder():
         for k, z in replacements.items():
             pregex = pregex.replace("%({:s})".format(k), z)
         self.pregex = pregex
-
-    def create_regex(self):
-        """Create regex from pre-regex. """
-        self.scan_pregex()
-        self.update_regex()
 
     def scan_pregex(self):
         """Scan pregex for matchers.
