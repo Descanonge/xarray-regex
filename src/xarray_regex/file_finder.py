@@ -11,7 +11,8 @@ import re
 
 from typing import Any, Callable, Dict, List, Union
 
-from xarray_regex.matcher import Matcher
+from xarray_regex.matcher import (Matcher, Matches,
+                                  get_matchers_indices)
 
 log = logging.getLogger(__name__)
 
@@ -138,8 +139,8 @@ class FileFinder():
             return os.path.join(self.root, f)
 
         def get_match(m, group):
-            return ''.join([str(m_['match']) for m_ in m
-                            if m_['matcher'].group == group])
+            return ''.join([m_.get_match(parsed=False) for m_ in m
+                            if m_.matcher.group == group])
 
         def nest(files_matches, groups, relative):
             if len(groups) == 0:
@@ -269,25 +270,7 @@ class FileFinder():
         if not relative:
             filename = os.path.relpath(filename, self.root)
 
-        m = self.pattern.fullmatch(filename)
-        if m is None:
-            raise ValueError("Filename did not match pattern.")
-        if len(m.groups()) != self.n_matchers:
-            raise IndexError("Not as many matches as matchers.")
-        matches = []
-        for i in range(self.n_matchers):
-            matcher = self.matchers[i]
-            value = m.group(i+1)
-            if parse and matcher.fmt is not None:
-                value = matcher.fmt.parse(value)
-
-            matches.append({
-                'matcher': matcher,
-                'match': value,
-                'start': m.start(i+1),
-                'end': m.end(i+1)
-            })
-        return matches
+        return Matches(self.matchers, filename, self.pattern)
 
     def get_filename(self, fixes: Dict = None, relative: bool = False,
                      **kw_fixes: Any) -> str:
@@ -501,7 +484,7 @@ class FileFinder():
         for f in files:
             try:
                 matches = self.get_matches(f, relative=True)
-            except ValueError:
+            except ValueError:  # Filename did not match pattern
                 pass
             else:
                 files_matched.append((f, matches))
@@ -530,24 +513,5 @@ class FileFinder():
         KeyError: No matcher found.
         TypeError: Key type is not valid.
         """
-        if isinstance(key, int):
-            return [self.matchers[key]]
-        if all([isinstance(k, int) for k in key]):
-            return [self.matchers[k] for k in key]
-
-        if isinstance(key, str):
-            k = key.split(':')
-            if len(k) == 1:
-                name, group = k[0], None
-            else:
-                group, name = k[:2]
-            selected = []
-            for m in self.matchers:
-                if m.name == name and (group is None or group == m.group):
-                    selected.append(m)
-
-            if len(selected) == 0:
-                raise KeyError(f"No matcher found for key '{key}'")
-            return selected
-
-        raise TypeError("Key must be int, str or list of int")
+        selected = get_matchers_indices(self.matchers, key)
+        return [self.matchers[i] for i in selected]

@@ -6,9 +6,13 @@
 # at the root of this project. © 2021 Clément Haëck
 
 import re
-from typing import Any
+import logging
+from typing import Any, List, Union
 
 from .format import Format
+
+
+log = logging.getLogger(__name__)
 
 
 class Matcher():
@@ -153,3 +157,108 @@ class Matcher():
             raise KeyError("Unknown replacement '{}'.".format(match.group(0)))
 
         return re.sub("%([a-zA-Z%])", replace, self.rgx)
+
+
+class Match:
+    """Match extract from a filename.
+
+    Parameters
+    ----------
+    """
+
+    def __init__(self, matcher: Matcher, match: re.match, group: int):
+        self.matcher = matcher
+        self.match_str = match.group(group+1)
+        self.start = match.start(group+1)
+        self.end = match.end(group+1)
+
+        self.match_parsed = None
+        if matcher.fmt is not None:
+            try:
+                self.match_parsed = matcher.fmt.parse(self.match_str)
+            except Exception:
+                log.warning('Failed to parse for matcher %s', str(matcher))
+
+    def __repr__(self):
+        return '\n'.join([super().__repr__(), self.__str__()])
+
+    def __str__(self):
+        return str(self.matcher) + ' = {}'.format(self.match_str)
+
+    def get_match(self, parsed: bool = True):
+        if parsed and self.match_parsed is not None:
+            return self.match_parsed
+        return self.match_str
+
+
+class Matches:
+    """Store multiples matches."""
+
+    def __init__(self, matchers: List[Matcher], filename: str,
+                 pattern: re.Pattern):
+        """Creates matches from filename.
+
+        Raises
+        ------
+        ValueError: Filename did not match pattern.
+        IndexError: Not as many matches as matchers.
+        """
+        self.matches = []
+        self.matchers = matchers
+
+        m = pattern.fullmatch(filename)
+        if m is None:
+            raise ValueError("Filename did not match pattern.")
+        if len(m.groups()) != len(matchers):
+            raise IndexError("Not as many matches as matchers.")
+
+        for i in range(len(matchers)):
+            self.matches.append(Match(matchers[i], m, i))
+
+    def __repr__(self):
+        return '\n'.join([super().__repr__(), self.__str__()])
+
+    def __str__(self):
+        return '\n'.join([str(m) for m in self.matches])
+
+    def __getitem__(self, key: Union[int, str]):
+        return self.get_matches(key)
+
+    def __iter__(self):
+        return iter(self.matches)
+
+    def get_matches(self, key: Union[int, str]):
+        selected = get_matchers_indices(self.matchers, key)
+        return [self.matches[k] for k in selected]
+
+
+def get_matchers_indices(matchers: List[Matcher],
+                         key: Union[int, str]) -> List[int]:
+    """Get list of matchers indices corresponding to key.
+
+    Key can be an integer index, or a string of the name, or a combination
+    of the group and the name with the syntax 'group:name'
+
+    Raises
+    ------
+    IndexError: No matcher found corresponding to the key
+    TypeError: Key is not int or str
+    """
+    if isinstance(key, int):
+        return [key]
+    if isinstance(key, str):
+        k = key.split(':')
+        if len(k) == 1:
+            name, group = k[0], None
+        else:
+            group, name = k[:2]
+        selected = []
+        for i, m in enumerate(matchers):
+            if m.name == name and (group is None or group == m.group):
+                selected.append(i)
+
+        if len(selected) == 0:
+            raise IndexError(f"No matcher found for key '{key}'")
+        return selected
+
+    raise TypeError("Key must be int or str.")
