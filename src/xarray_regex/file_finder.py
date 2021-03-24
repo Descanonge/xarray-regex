@@ -72,8 +72,6 @@ class FileFinder():
 
         if isinstance(root, (list, tuple)):
             root = os.path.join(*root)
-        if not os.path.isdir(root):
-            raise ValueError(f"'{root}' directory does not exist.")
         self.root = root
 
         self.pregex = ''
