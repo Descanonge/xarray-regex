@@ -139,7 +139,7 @@ class FileFinder():
             return os.path.join(self.root, f)
 
         def get_match(m, group):
-            return ''.join([m_['match'] for m_ in m
+            return ''.join([str(m_['match']) for m_ in m
                             if m_['matcher'].group == group])
 
         def nest(files_matches, groups, relative):
