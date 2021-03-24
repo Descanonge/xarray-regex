@@ -50,8 +50,7 @@ class FileFinder():
         Characters outside of matcher are considered as valid regex (and not
         escaped) if true.
     pattern: re.pattern
-    subpatterns: list of re.pattern
-        Compiled patterns for each directory obtained from the regex.
+        Compiled regex.
     matchers: list of Matchers
         List of matchers for this finder, in order.
     segments: list of str
@@ -78,7 +77,6 @@ class FileFinder():
         self.regex = ''
         self.use_regex = use_regex
         self.pattern = None
-        self.subpatterns = []
         self.matchers = []
         self.segments = []
         self.fixed_matchers = dict()
@@ -453,8 +451,6 @@ class FileFinder():
 
         self.regex = ''.join(segments)
         self.pattern = re.compile(self.regex)
-        self.subpatterns = [re.compile(rgx)
-                            for rgx in self.regex.split(os.path.sep)]
         self.scanned = False
         self.files = []
 
@@ -475,13 +471,15 @@ class FileFinder():
         if self.regex == '':
             raise AttributeError("Finder is missing a regex.")
 
+        subpatterns = [re.compile(rgx)
+                       for rgx in self.regex.split(os.path.sep)]
         files = []
         for dirpath, dirnames, filenames in os.walk(self.root):
             # Feels hacky, better way ?
             depth = dirpath.count(os.sep) - self.root.count(os.sep)
-            pattern = self.subpatterns[depth]
+            pattern = subpatterns[depth]
 
-            if depth == len(self.subpatterns)-1:
+            if depth == len(subpatterns)-1:
                 dirnames.clear()  # Look no deeper
                 files += [os.path.relpath(os.path.join(dirpath, f), self.root)
                           for f in filenames]
