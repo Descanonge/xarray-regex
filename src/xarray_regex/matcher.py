@@ -145,8 +145,8 @@ class Matcher():
             group = match.group(1)
             if group == '%':
                 return '%'
-            if group in self.NAME_RGX:
-                replacement = self.NAME_RGX[group]
+            if group in self.DEFAULT_ELTS:
+                replacement = self.DEFAULT_ELTS[group][0]
                 if '%' in replacement:
                     return self.get_regex(replacement)
                 return replacement
