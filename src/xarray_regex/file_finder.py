@@ -177,12 +177,13 @@ class FileFinder():
 
         return files
 
-    def fix_matcher(self, key: Union[int, str], value: Union[Any, List[Any]]):
+    def fix_matcher(self, key: Union[int, str], value: Union[Any, List[Any]],
+                    discard: bool = False):
         """Fix a matcher to a string.
 
         Parameters
         ----------
-        key : int, or str, or tuple of str of lenght 2.
+        key : int, or str, or tuple of str of length 2.
             If int, is matcher index, starts at 0.
             If str, can be matcher name, or a group and name combination with
             the syntax 'group:name'.
@@ -193,12 +194,17 @@ class FileFinder():
             that will be formatted using the matcher format string.
             A list of values will be joined by the regex '|' OR.
             Special characters should be properly escaped in strings.
+        discard: bool
+            If true, matchers with the 'discard' option will not be fixed.
         """
         for m in self.get_matchers(key):
+            if discard and m.discard:
+                continue
             self.fixed_matchers[m.idx] = value
         self.update_regex()
 
     def fix_matchers(self, fixes: Dict[Union[int, str], Any] = None,
+                     discard: bool = False,
                      **fixes_kw):
         """Fix multiple values at once.
 
@@ -207,12 +213,14 @@ class FileFinder():
         fixes: dict
            Dictionnary of matcher key: value. See :func:`fix_matcher` for
            details. If None, no matcher will be fixed.
+        discard: bool
+            If true, matchers with the 'discard' option will not be fixed.
         """
         if fixes is None:
             fixes = {}
         fixes.update(fixes_kw)
         for f in fixes.items():
-            self.fix_matcher(*f)
+            self.fix_matcher(*f, discard=discard)
 
     def unfix_matchers(self, *keys: str):
         """Unfix matchers.
