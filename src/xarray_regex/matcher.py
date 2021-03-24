@@ -29,12 +29,12 @@ class Matcher():
         Group name.
     name: str
         Matcher name.
-    custom: bool
-        If there is a custom regex to use preferentially.
     rgx: str
         Regex.
     discard: bool
         If the matcher should not be used when retrieving values from matches.
+    fmt: Format
+        Format string object.
     match: str
         The string that created the matcher `%(match)`.
     """
@@ -71,9 +71,7 @@ class Matcher():
         self.rgx = None
         self.discard = False
         self.fmt = None
-        self.fmt_params = None
-
-        self.match = m.group()[2:-1]  # slicing removes %()
+        self.match = ''
 
         self.set_matcher(m)
 
@@ -97,35 +95,35 @@ class Matcher():
         ValueError
             Empty custom regex.
         """
-        group = m.group('group')
-        name = m.group('name')
+        self.match = m.group()[2:-1]  # slicing removes %()
+        self.group = m.group('group')
+        self.name = m.group('name')
+        self.discard = m.group('discard') is not None
+
         rgx = m.group('rgx')
         fmt = m.group('fmt')
 
-        if name is None:
+        if self.name is None:
             raise NameError("Matcher name cannot be empty.")
         if rgx is not None and rgx == '':
             raise ValueError("Matcher custom regex cannot be empty.")
         if fmt is not None and fmt == '':
             raise ValueError("Matcher custom format cannot be empty.")
 
-        self.group = group
-        self.name = name
-        self.discard = m.group('discard') is not None
-        self.fmt = None
+        # Set defaults if name is known
+        if self.name in self.DEFAULT_ELTS:
+            self.rgx, fmt_def = self.DEFAULT_ELTS[self.name]
+            self.fmt = Format(fmt_def)
 
-        if name in self.DEFAULT_ELTS:  # Set new default if name is known
-            self.rgx, self.fmt = self.DEFAULT_ELTS[name]
-            self.fmt = Format(self.fmt)
-
-        # Override defaults
-        if rgx:
-            self.rgx = rgx
+        # Override default format
         if fmt:
             self.fmt = Format(fmt)
-            # Override rgx if not in known names, or specified in pre-regex
-            if not rgx and name not in self.DEFAULT_ELTS:
+            if not rgx:  # No need to generate rgx if it is provided
                 self.rgx = self.fmt.generate_expression()
+
+        # Override regex
+        if rgx:
+            self.rgx = rgx
 
     def format(self, value: Any):
         return self.fmt.format(value)
