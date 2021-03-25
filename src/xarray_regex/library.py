@@ -47,10 +47,16 @@ def get_date(matches: List, default_date: Dict = None,
             if (not m.matcher.discard
                 and (group is None or m.matcher.group == group))}
 
-    elts_needed = {'x', 'X', 'Y', 'm', 'd', 'B', 'j', 'H', 'M', 'S'}
+    elts_needed = {'x', 'X', 'Y', 'm', 'd', 'B', 'j', 'H', 'M', 'S', 'F'}
     if len(set(elts.keys()) & elts_needed) == 0:
         log.warning("No matchers to retrieve a date from."
                     " Returning default date.")
+
+    elt = elts.pop("F", None)
+    if elt is not None:
+        elts["Y"] = elt[:4]
+        elts["m"] = elt[5:7]
+        elts["d"] = elt[8:10]
 
     elt = elts.pop("x", None)
     if elt is not None:
