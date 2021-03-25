@@ -9,7 +9,7 @@ import os
 import logging
 import re
 
-from typing import Any, Callable, Dict, List, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 from xarray_regex.matcher import (Matcher, Matches,
                                   get_matchers_indices)
@@ -61,7 +61,7 @@ class FileFinder():
     fixed_matchers: dict
         Dictionnary of matchers with a set value.
         'matcher index': 'replacement string'
-    files: list of tuples
+    _files: list of tuples
         List of tuples containing the filename relative to the root,
         and a list of matches.
     scanned: bool
@@ -82,7 +82,7 @@ class FileFinder():
         self.matchers = []
         self.segments = []
         self.fixed_matchers = dict()
-        self.files = []
+        self._files = []
         self.scanned = False
 
         self.set_pregex(pregex, **replacements)
@@ -93,6 +93,16 @@ class FileFinder():
     def n_matchers(self) -> int:
         """Number of matchers in pre-regex."""
         return len(self.matchers)
+
+    @property
+    def files(self) -> List[Tuple[str, Matches]]:
+        """List of filenames and their matches.
+
+        Will scan files if not already.
+        """
+        if not self.scanned:
+            self.find_files()
+        return self._files
 
     def __repr__(self):
         return '\n'.join([super().__repr__(), self.__str__()])
@@ -111,7 +121,7 @@ class FileFinder():
         if not self.scanned:
             s += ["not scanned"]
         else:
-            s += ["scanned: found {} files".format(len(self.files))]
+            s += ["scanned: found {} files".format(len(self._files))]
         return '\n'.join(s)
 
     def get_files(self, relative: bool = False,
@@ -167,13 +177,13 @@ class FileFinder():
 
         if nested is None:
             files = [make_abs(f) if not relative else f
-                     for f, m in self.files]
+                     for f, m in self._files]
         else:
             groups = [m.group for m in self.matchers]
             for g in nested:
                 if g not in groups:
                     raise KeyError(f'{g} is not in FileFinder groups.')
-            files = nest(self.files, nested, relative)
+            files = nest(self._files, nested, relative)
 
         return files
 
@@ -436,7 +446,7 @@ class FileFinder():
         self.regex = ''.join(segments)
         self.pattern = re.compile(self.regex)
         self.scanned = False
-        self.files = []
+        self._files = []
 
     def find_files(self):
         """Find files to scan.
@@ -502,7 +512,7 @@ class FileFinder():
                   len(files_matched), self.root)
 
         self.scanned = True
-        self.files = files_matched
+        self._files = files_matched
 
     def get_matchers(self, key: Union[int, str]) -> List[Matcher]:
         """Return list of matchers corresponding to key.
