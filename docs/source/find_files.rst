@@ -163,13 +163,16 @@ All characters outside of matchers will then be properly escaped.
    work.
 
 
-Nesting files
-=============
+Obtaining files
+===============
 
-Found files can be retrieved using :func:`FileFinder.get_files`. This outputs
-a list of all files (relative to the finder root, or as absolute paths), sorted
-alphabetically.
-They can also be returned as a nested lists of filenames.
+Files can be retrieved with the :func:`FileFinder.get_files` function, or
+the :attr:`FileFinder.files` attribute. Both will scan the directory for files
+if it has not been done yet.
+The 'files' attribute also stores the matches. See :ref:`Retrieve information`
+for details on how matches are stored.
+
+:func:`FileFinder.get_files` can also return nested lists of filenames.
 This is aimed to work with `xarray.open_mfdataset()
 <http://xarray.pydata.org/en/stable/generated/xarray.open_mfdataset.html>`__,
 which will merge files in a specific order when supplied a nested list of files.

@@ -126,11 +126,11 @@ class Format:
 
         This simply use int() and float() to parse strings. Those are thrown
         off when using fill characters (other than 0), or thousands groupings,
-        so we remove thoses from the string.
+        so we remove these from the string.
 
         Parsing will fail when using the '-' fill character on a negative
-        number, or when padding with zeros to the right. If you use such
-        formats, please contact to explain me why in the hell you do.
+        number, or when padding with numbers. If you use such formats, please
+        contact me to explain me why in the hell you do.
         """
         if self.type == 'd':
             return self.parse_d(s)
@@ -232,7 +232,8 @@ class Format:
 
         Remove characters that throw off int() and float() parsing.
         Namely fill and grouping characters.
-        Will remove fill, even when fill is '-'.
+        Will remove fill, except when fill is zero (parsing functions are
+        okay with that).
         """
         to_remove = [',', '_']  # Any grouping char
         if self.fill != '0':

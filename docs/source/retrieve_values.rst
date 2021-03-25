@@ -5,19 +5,23 @@ Retrieve information
 --------------------
 
 As some metadata might only be found in the filenames, FileFinder offer the
-possibility to retrieve it easily using the :func:`FileFinder.get_matches`
-method.
-This returns a :class:`Matches<xarray_regex.matcher.Matches>` object,
-containing a list of :class:`Match<xarray_regex.matcher.Match>` objects.
-Each match retain its position in the filename string (relative to the root),
-the matched characters, and if available its parsed value.
+possibility to retrieve it easily using matches.
+The :attr:`FileFinder.files` attribute stores files as a list of tuples
+containing a filename and its corresponding matches.
+One can also get matches from any filename with the
+:func:`FileFinder.get_matches` function.
+In both cases, matches are stored as a
+:class:`Matches<xarray_regex.matcher.Matches>` object, containing a list of
+:class:`Match<xarray_regex.matcher.Match>` objects. Each match retain its
+position in the filename string (relative to the root), the matched characters,
+and if available its parsed value.
 
 A specific match can be obtained using :func:`Matches.get_matches()
 <xarray_regex.matcher.Matches.get_matches>` and either:
 
   - the index of the matcher in the pre-regex (starting at 0)
-  - a string specifying the name of the matcher, or its group and name (with
-    the syntax 'group:name'). If multiple matches correspond to the string, a list
+  - a string specifying the name of the matcher, or its group and name (with the
+    syntax 'group:name'). If multiple matches correspond to the string, a list
     of matches is returned.
 
 The package supply the function :func:`library.get_date
